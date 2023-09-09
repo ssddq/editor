@@ -1,0 +1,1 @@
+ghcid --target=editor --command="cabal repl" --run=":! cabal build"

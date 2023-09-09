@@ -1,0 +1,21 @@
+cabal-version: 2.2
+
+name:           common
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Common
+  other-modules:
+      Common.Types
+      Common.Utils
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  build-depends:
+      base
+    , ghc-prim
+    , vector
+  default-language: Haskell2010

@@ -1,0 +1,47 @@
+cabal-version: 2.4
+
+name:       editor
+version:    0.0.0
+build-type: Simple
+data-files: fonts/**/*.ttf
+
+executable editor
+  main-is: Main.hs
+  hs-source-dirs:
+      main
+  default-extensions:
+      OverloadedRecordDot
+      DataKinds
+      TypeApplications
+      DisambiguateRecordFields
+      ImportQualifiedPost
+  other-extensions:
+      TemplateHaskell
+  build-tool-depends:
+      preprocessor:tpr-pp
+  ghc-options:
+      -O2 -threaded
+  build-depends:
+      base
+    , common
+    , ghc
+    , renderer
+    , bytestring
+    , file-embed
+    , parse-font
+    , ghc-prim
+    , preprocessor
+    , primitive
+    , sdl2
+    , shaders
+    , storable-tuple
+    , text
+    , time
+    , timeit
+    , vector
+    , vma
+    , vulkan-api
+    , mmap
+    , streaming
+    , filebuffer
+  default-language: Haskell2010

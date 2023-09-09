@@ -1,0 +1,45 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.35.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           shaders
+version:        0.0.0
+build-type:     Custom
+extra-source-files:
+    src/subpass0.vert
+    src/subpass0.frag
+    src/subpass1.vert
+    src/subpass1.frag
+    src/subpass2.vert
+    src/subpass2.frag
+    data/vert0.spv
+    data/frag0.spv
+    data/vert1.spv
+    data/frag1.spv
+    data/vert2.spv
+    data/frag2.spv
+
+custom-setup
+  setup-depends:
+      Cabal
+    , base
+    , process
+
+library
+  exposed-modules:
+      Shaders
+  other-modules:
+      Paths_shaders
+  hs-source-dirs:
+      src
+  build-depends:
+      attoparsec
+    , base
+    , bytestring
+    , file-embed
+    , haskell-src-meta
+    , template-haskell
+    , th-abstraction
+  default-language: Haskell2010

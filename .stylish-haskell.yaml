@@ -1,0 +1,48 @@
+steps:
+  - module_header:
+      indent: 2
+      sort: true
+      separate_lists: true
+      break_where: single
+      open_bracket: next_line 
+  - records:
+      equals: "same_line"
+      first_field: "indent 2"
+      field_comment: 2
+      deriving: 2
+      via: "indent 2"
+      sort_deriving: true
+      break_enums: false
+      break_single_constructors: false
+      curried_context: true
+  - simple_align:
+      cases: always
+      top_level_patterns: always
+      records: always
+      multi_way_if: always
+  - imports:
+      align: group
+      list_align: after_alias
+      pad_module_names: true
+      long_list_align: new_line_multiline
+      empty_list_align: right_after
+      list_padding: 2
+      separate_lists: false
+      space_surround: false
+      post_qualify: true
+      group_imports: false
+      group_rules:
+        - match: "^[a-zA-Z]+$"
+        - match: ".*"
+          sub_group: "^[^.]+"
+  - language_pragmas:
+      style: vertical
+      align: true
+      remove_redundant: true
+      language_prefix: LANGUAGE
+  - tabs:
+      spaces: 2
+  - trailing_whitespace: {}
+columns: 120
+newline: lf
+cabal: true

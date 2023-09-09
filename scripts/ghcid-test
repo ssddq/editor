@@ -1,0 +1,1 @@
+ghcid --run=":! ghcid --target=test --run"

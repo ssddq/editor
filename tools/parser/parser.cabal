@@ -1,0 +1,28 @@
+cabal-version: 2.2
+
+name:           parser
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Parse
+      Parse.Block
+      Parse.File
+  other-modules:
+      Types
+      Lex.Lines
+      Lex.Tokens
+  hs-source-dirs:
+      .
+  ghc-options: -g
+  default-extensions:
+      ImportQualifiedPost
+  build-tool-depends:
+      alex:alex
+    , happy:happy
+  build-depends:
+      array
+    , base
+    , bytestring
+  default-language: Haskell2010

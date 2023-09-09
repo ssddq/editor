@@ -1,0 +1,82 @@
+cabal-version: 2.2
+
+name:           formatter
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Format
+  other-modules:
+      Format.TypeSignature
+      Format.DataDeclaration
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  build-tool-depends:
+      alex:alex
+    , happy:happy
+  build-depends:
+    , array
+    , base
+    , bytestring
+    , common
+    , parser
+    , mtl
+    , process
+    , temporary
+  default-language: Haskell2010
+
+executable formatFile
+  main-is: Format.hs
+  other-modules:
+      Format.TypeSignature
+      Format.DataDeclaration
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: 
+      -main-is Format
+  build-tool-depends:
+      alex:alex
+    , happy:happy
+  build-depends:
+      attoparsec
+    , array
+    , base
+    , bytestring
+    , common
+    , parser
+    , mtl
+    , process
+    , temporary
+  default-language: Haskell2010
+
+executable wrap
+  main-is: Wrap.hs
+  other-modules:
+      Format
+      Format.TypeSignature
+      Format.DataDeclaration
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: 
+      -main-is Wrap
+  build-tool-depends:
+      alex:alex
+    , happy:happy
+  build-depends:
+      attoparsec
+    , array
+    , base
+    , bytestring
+    , common
+    , parser
+    , mtl
+    , process
+    , temporary
+  default-language: Haskell2010

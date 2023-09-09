@@ -1,0 +1,84 @@
+cabal-version: 2.2
+
+name:           renderer
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Renderer
+  other-modules:
+      Command
+      Command.Write
+      Command.Signals
+      Command.Buffers
+      Command.Record
+      Command.Record.Info
+      Command.Record.Utils
+      Font
+      Initialize
+      Initialize.Allocator
+      Initialize.Allocator.Info
+      Initialize.Device
+      Initialize.Device.Info
+      Initialize.Device.Utils
+      Initialize.Instance
+      Initialize.Instance.Info
+      Initialize.Swapchain
+      Initialize.Swapchain.Info
+      Initialize.Swapchain.Utils
+      Initialize.Window
+      Pipeline
+      Pipeline.Descriptor
+      Pipeline.Descriptor.Info
+      Pipeline.Graphics
+      Pipeline.Graphics.Info
+      Pipeline.Graphics.Utils
+      Pipeline.Images
+      Pipeline.Images.Info
+      Pipeline.RenderPass
+      Pipeline.RenderPass.Info
+      Types
+      Utils
+      Vk
+  hs-source-dirs:
+      .
+  default-extensions:
+      OverloadedRecordDot
+      TypeApplications
+      DisambiguateRecordFields
+      FlexibleContexts
+      RankNTypes
+      DataKinds
+      MultiWayIf
+      NamedFieldPuns
+      ImportQualifiedPost
+      RecordWildCards
+  other-extensions:
+      TemplateHaskell
+  build-tool-depends:
+      preprocessor:tpr-pp
+  build-depends:
+      base
+    , binary
+    , common
+    , ghc
+    , bytestring
+    , containers
+    , file-embed
+    , ghc-prim
+    , mtl
+    , preprocessor
+    , primitive
+    , sdl2
+    , storable-tuple
+    , text
+    , time
+    , timeit
+    , vector
+    , vma
+    , vulkan-api
+    , mmap
+    , streaming
+    , resourcet
+  default-language: Haskell2010

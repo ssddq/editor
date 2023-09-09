@@ -1,0 +1,58 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1693967143,
+        "narHash": "sha256-JC6VNIhicr3EiqFB2MBBsGoCqAWcBBqJnHBvLxy4Vws=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "05f82739df7cf884907db8ee9b22c76a7efb6edb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "release": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-IO5G6vaxMEyLpTDxMWVynwzT1zF+LdL6Jf0voeHywCU=",
+        "type": "file",
+        "url": "https://github.com/ssddq/editor/releases/download/0.0.1/editor_x86-64"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/ssddq/editor/releases/download/0.0.1/editor_x86-64"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "release": "release",
+        "vma-lib": "vma-lib"
+      }
+    },
+    "vma-lib": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1648570029,
+        "narHash": "sha256-e6zea40lqd/ocuzdRNxzGvyUl8RJnTq//PFC0s2ETvo=",
+        "ref": "master",
+        "rev": "0c7ad4e85944b38ef6e4d2becfd58bf58385812e",
+        "revCount": 991,
+        "type": "git",
+        "url": "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
+      },
+      "original": {
+        "ref": "master",
+        "rev": "0c7ad4e85944b38ef6e4d2becfd58bf58385812e",
+        "type": "git",
+        "url": "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

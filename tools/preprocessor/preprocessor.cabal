@@ -1,0 +1,60 @@
+cabal-version: 2.2
+
+name:           preprocessor
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Preprocessor
+  other-modules:
+      Lib
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  build-tool-depends:
+      alex:alex
+    , happy:happy
+  build-depends:
+      attoparsec
+    , array
+    , base
+    , bytestring
+    , formatter
+    , parser
+    , haskell-src-meta
+    , mtl
+    , process
+    , template-haskell
+    , temporary
+    , th-abstraction
+  default-language: Haskell2010
+
+executable tpr-pp
+  main-is: Preprocessor.hs
+  other-modules:
+      Lib
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options:
+      -main-is Preprocessor
+  build-tool-depends:
+      alex:alex
+    , happy:happy
+  build-depends:
+      attoparsec
+    , array
+    , base
+    , formatter
+    , parser
+    , bytestring
+    , haskell-src-meta
+    , mtl
+    , process
+    , template-haskell
+    , temporary
+    , th-abstraction
+  default-language: Haskell2010

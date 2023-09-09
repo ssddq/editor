@@ -1,0 +1,11 @@
+*
+!/**/
+!*.*
+!**/scripts/**
+**/.stack-work/**
+**/dist-newstyle/**
+**.spv
+**.prof
+**/.direnv
+!**.gitkeep
+!**/LICENSE

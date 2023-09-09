@@ -1,0 +1,61 @@
+cabal-version: 2.2
+
+name:           parse-font
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Font
+  other-modules:
+      Font.Generics
+      Font.Load
+      Font.TTF
+      Font.TTF.Parse
+      Font.TTF.Patterns
+      Font.TTF.Types
+      Font.TTF.Utils
+      Paths_parse_font
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: -Wall -Wno-name-shadowing -Widentities
+  build-depends:
+      attoparsec
+    , base
+    , cereal
+    , bytestring
+    , common
+    , file-embed
+    , fixed
+    , memory
+    , mmap
+    , mtl
+    , vector
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  hs-source-dirs:
+      .
+      test
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: -main-is Test
+  build-depends:
+      attoparsec
+    , base
+    , cereal
+    , common
+    , bytestring
+    , file-embed
+    , fixed
+    , hspec
+    , hspec-expectations
+    , memory
+    , mmap
+    , mtl
+    , vector
+  default-language: Haskell2010

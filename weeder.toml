@@ -1,0 +1,8 @@
+roots = [ "Main.main"
+        , "Test.main"
+        , "Preprocessor.main"
+        , "Gen.*"
+        , "^Paths_*.*"
+        , "sel:"
+        ]
+type-class-roots = true

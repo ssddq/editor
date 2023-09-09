@@ -1,0 +1,73 @@
+cabal-version: 2.2
+
+name:           filebuffer
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Filebuffer
+  other-modules:
+      Data.Vector.Dynamic
+      Data.Vector.Async
+      Data.Edits
+      Data.Lines
+      Data.Tree.Lines
+      Data.Tree.Common
+      Data.Tree.ByteString
+      Data.Tree
+      Stream
+      Utils
+      Unsafe.ByteString
+  hs-source-dirs:
+      .
+  default-extensions:
+      ImportQualifiedPost
+  build-depends:
+      async
+    , base
+    , bytestring
+    , common
+    , containers
+    , ghc
+    , ghc-prim
+    , streaming
+    , timeit
+    , vector
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules:
+      Data.Vector.Dynamic
+      Data.Vector.Async
+      Data.Tree.Lines
+      Data.Tree.Common
+      Data.Tree.ByteString
+      Data.Tree
+      Data.Edits
+      Data.Lines
+      Stream
+      Filebuffer
+      Utils
+      Unsafe.ByteString
+  hs-source-dirs:
+      .
+      test
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: -main-is Test
+  build-depends:
+      hspec
+    , hspec-expectations
+    , async
+    , base
+    , bytestring
+    , common
+    , containers
+    , ghc
+    , ghc-prim
+    , streaming
+    , vector
+  default-language: Haskell2010
