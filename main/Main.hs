@@ -71,7 +71,9 @@ mainLoop
   -> IO Vk { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
 mainLoop vk = do
   event <- SDL.waitEvent
-  mainLoop =<< handle event vk
+  case event of
+    SDL.Event _ (Key SDL.KeycodeQ Ctrl) -> return vk
+    e -> mainLoop =<< handle e vk
 
 
 
@@ -84,6 +86,10 @@ pattern Key keycode modifier <- SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.P
 {-# INLINE Shift #-}
 pattern Shift :: SDL.KeyModifier
 pattern Shift <- (shiftDown -> True)
+
+{-# INLINE Ctrl #-}
+pattern Ctrl :: SDL.KeyModifier
+pattern Ctrl <- (ctrlDown -> True)
 
 handle
   :: SDL.Event
@@ -115,6 +121,11 @@ shiftDown
   -> Bool
 shiftDown modifier = modifier.keyModifierLeftShift || modifier.keyModifierRightShift
 
+{-# INLINE ctrlDown #-}
+ctrlDown
+  :: SDL.KeyModifier
+  -> Bool
+ctrlDown modifier = modifier.keyModifierLeftCtrl || modifier.keyModifierRightCtrl
 
 
 -- * Filebuffer manipulation
