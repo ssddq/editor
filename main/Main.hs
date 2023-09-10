@@ -64,7 +64,7 @@ main = withArgs $ \file -> do
   SDLRaw.startTextInput
   mainLoop vk
   return ()
-  where fontFile = $(makeRelativeToProject "fonts/FiraCode/FiraCode.ttf" >>= embedFile)
+  where fontFile = $(makeRelativeToProject "fonts/FiraCode/FiraCode-Regular.ttf" >>= embedFile)
 
 mainLoop
   :: Vk    { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
