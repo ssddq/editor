@@ -95,7 +95,7 @@ writeCharacterDraw char constants font pDrawCmds pDrawData state = case (drawSta
         Constants {..} = constants
         (,,,) firstIndex indexCount advance _ = lookup $ fromIntegral $ fromEnum char
         width = scale * fromIntegral advance
-        mkDrawData x y = DrawData x y scale 0 0 scale fSize
+        mkDrawData x y = DrawData x y scale 0 0 scale fSize $ Color 239 241 245 255
         drawCmd = createVk @VkDrawIndexedIndirectCommand
           $ set @"indexCount"    |* fromIntegral indexCount
          &* set @"instanceCount" |* 1
@@ -112,11 +112,12 @@ writeCursorDraw
 writeCursorDraw font pDrawCmds pDrawData state = do
   let drawData = DrawData { xOffset = state.positionX
                           , yOffset = state.positionY - (textHeight / 2)
-                          , xx = 1.0
+                          , xx = 1.5
                           , xy = 0
                           , yx = 0
-                          , yy = 0.4 * lineHeight
+                          , yy = 0.5 * lineHeight
                           , fSize = 1.0
+                          , color = Color 243 139 168 255
                           }
   poke pDrawCmds drawCmd
   poke pDrawData drawData

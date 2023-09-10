@@ -20,23 +20,28 @@ layout(binding = 0) uniform UniformBufferObject
   mat4 proj;
 } ubo;
 
-layout(location = 0) in int  xCoordinate;
-layout(location = 1) in int  yCoordinate;
-layout(location = 2) in uint flags;
-layout(location = 3) in float xPos;
-layout(location = 4) in float yPos;
-layout(location = 5) in float xx;
-layout(location = 6) in float xy;
-layout(location = 7) in float yx;
-layout(location = 8) in float yy;
-layout(location = 9) in float fontSize;
+layout(location = 0)  in int   xCoordinate;
+layout(location = 1)  in int   yCoordinate;
+layout(location = 2)  in uint  flags;
+layout(location = 3)  in float xPos;
+layout(location = 4)  in float yPos;
+layout(location = 5)  in float xx;
+layout(location = 6)  in float xy;
+layout(location = 7)  in float yx;
+layout(location = 8)  in float yy;
+layout(location = 9)  in float fontSize;
+layout(location = 10) in float red;
+layout(location = 11) in float green;
+layout(location = 12) in float blue;
+layout(location = 13) in float alpha;
 
 layout(location = 0) out vec2  coordinates;
 layout(location = 1) out float fill;
 layout(location = 2) out float orientationBase;
 layout(location = 3) out float orientationControl;
+layout(location = 4) out vec4  outColor;
 
-void main() 
+void main()
 {
   float xWindowSize = float(PushConstants.xWindowSize);
   float yWindowSize = float(PushConstants.yWindowSize);
@@ -63,21 +68,23 @@ void main()
 
   // Extract bit 3 from flags to determine the orientation of the 'base' triangle:
   // the triangle is oriented counterclockwise if bit 3 is set, and clockwise otherwise.
-  // orientationBase should evaluate to 
+  // orientationBase should evaluate to
   // 1.0 if the vertex is part of a draw call
   // where the 'base' triangle is oriented counterclockwise, and
-  // 0.0 if the vertex is part of a draw call 
+  // 0.0 if the vertex is part of a draw call
   // where the 'base' triangle is oriented clockwise.
 
   orientationBase = bitfieldExtract(flags, 3, 1);
 
   // Extract bit 4 from flags to determine the orientation of the 'control' triangle:
   // the triangle is oriented counterclockwise if bit 4 is set, and clockwise otherwise.
-  // orientationControl should evaluate to 
+  // orientationControl should evaluate to
   // 1.0 if the vertex is part of a draw call
   // where the 'control' triangle is oriented counterclockwise, and
-  // 0.0 if the vertex is part of a draw call 
+  // 0.0 if the vertex is part of a draw call
   // where the 'control' triangle is oriented clockwise.
 
   orientationControl = bitfieldExtract(flags, 4, 1);
+
+  outColor = vec4(red, green, blue, alpha);
 }

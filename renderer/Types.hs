@@ -88,9 +88,9 @@ data Constants = Constants
   deriving (Show)
 
 data Descriptors = Descriptors
-  { sets    :: !(V.Vector VkDescriptorSet)
-  , layouts :: !(V.Vector VkDescriptorSetLayout)
-  , pool    :: {-# UNPACK #-} !VkDescriptorPool
+  { set    :: {-# UNPACK #-} !VkDescriptorSet
+  , layout :: {-# UNPACK #-} !VkDescriptorSetLayout
+  , pool   :: {-# UNPACK #-} !VkDescriptorPool
   }
 
 data Done
@@ -103,6 +103,14 @@ data DrawData = DrawData
   , yx      :: {-# UNPACK #-} !Float
   , yy      :: {-# UNPACK #-} !Float
   , fSize   :: {-# UNPACK #-} !Float
+  , color   :: {-# UNPACK #-} !Color
+  }
+
+data Color = Color
+  { red   :: {-# UNPACK #-} !Word8
+  , green :: {-# UNPACK #-} !Word8
+  , blue  :: {-# UNPACK #-} !Word8
+  , alpha :: {-# UNPACK #-} !Word8
   }
 
 data Fences = Fences
@@ -165,7 +173,8 @@ data RenderPass1 = RenderPass1
 data RenderPipeline = RenderPipeline
   { renderPass0      :: {-# UNPACK #-} !RenderPass0
   , renderPass1      :: {-# UNPACK #-} !RenderPass1
-  , colorAttachment  :: {-# UNPACK #-} !Attachment
+  , colorAttachment0 :: {-# UNPACK #-} !Attachment
+  , colorAttachment1 :: {-# UNPACK #-} !Attachment
   , sampleAttachment :: {-# UNPACK #-} !Attachment
   , sampler          :: {-# UNPACK #-} !(Ptr VkSampler)
   }
@@ -285,8 +294,8 @@ instance (Target a ~ a) => Empty a where
   createEmpty a = a
 
 instance Storable DrawData where
-  sizeOf _ = 28
-  alignment _ = 28
+  sizeOf _ = 32
+  alignment _ = 32
   peek ptr = do
     xOffset <- peek $ castPtr ptr
     yOffset <- peekByteOff (castPtr ptr) 4
@@ -295,6 +304,7 @@ instance Storable DrawData where
     yx      <- peekByteOff (castPtr ptr) 16
     yy      <- peekByteOff (castPtr ptr) 20
     fSize   <- peekByteOff (castPtr ptr) 24
+    color   <- peekByteOff (castPtr ptr) 28
     return $ DrawData
       { xOffset
       , yOffset
@@ -303,6 +313,7 @@ instance Storable DrawData where
       , xy
       , yx
       , yy
+      , color
       }
   poke ptr drawData = do
     poke        (castPtr ptr)    drawData.xOffset
@@ -312,6 +323,28 @@ instance Storable DrawData where
     pokeByteOff (castPtr ptr) 16 drawData.yx
     pokeByteOff (castPtr ptr) 20 drawData.yy
     pokeByteOff (castPtr ptr) 24 drawData.fSize
+    pokeByteOff (castPtr ptr) 28 drawData.color
+
+instance Storable Color where
+  sizeOf    _ = 4
+  alignment _ = 4
+  peek ptr = do
+    red   <- peek $ castPtr ptr
+    green <- peekByteOff (castPtr ptr) 1
+    blue  <- peekByteOff (castPtr ptr) 2
+    alpha <- peekByteOff (castPtr ptr) 3
+    return $ Color
+      { red
+      , green
+      , blue
+      , alpha
+      }
+  poke ptr color = do
+    poke        (castPtr ptr)   color.red
+    pokeByteOff (castPtr ptr) 1 color.green
+    pokeByteOff (castPtr ptr) 2 color.blue
+    pokeByteOff (castPtr ptr) 3 color.alpha
+
 
 instance Storable Area where
   sizeOf    _ = 8

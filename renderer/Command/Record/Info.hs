@@ -16,6 +16,7 @@ import Vk
 -- | framebuffer attachments from some global data --
 -- | e.g. ProgramConstants, and use that to determine
 -- | how many clear colors to provide.
+
 mkRenderPassBeginInfo
   :: VkRenderPass
   -> VkFramebuffer

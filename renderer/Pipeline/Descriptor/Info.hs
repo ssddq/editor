@@ -37,9 +37,9 @@ allocationCreateInfo = createVk @VmaAllocationCreateInfo
   &* set                @"pUserData"           |* VK_NULL
   &* set                @"priority"            |* 1
 
-data Resource = UniformBuffer (VkBuffer)
-              | InputAttachment (VkImageView)
-              | ImageSampler (VkImageView) (Ptr VkSampler)
+data Resource = UniformBuffer   Word32 (VkBuffer)
+              | InputAttachment Word32 (VkImageView)
+              | ImageSampler    Word32 (VkImageView) (Ptr VkSampler)
 
 -- | Layout bindings and pool sizes for uniform buffer,
 -- | input attachment and image sampler descriptor sets.
@@ -54,20 +54,20 @@ data Resource = UniformBuffer (VkBuffer)
 descriptorSetLayoutBinding
   :: Resource
   -> VkDescriptorSetLayoutBinding
-descriptorSetLayoutBinding (UniformBuffer _buffer) = createVk @VkDescriptorSetLayoutBinding
-   $ set                @"binding"             |* 0
+descriptorSetLayoutBinding (UniformBuffer binding _buffer) = createVk @VkDescriptorSetLayoutBinding
+   $ set                @"binding"             |* binding
   &* set                @"descriptorType"      |* VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
   &* set                @"descriptorCount"     |* 1
   &* set                @"stageFlags"          |* VK_SHADER_STAGE_VERTEX_BIT
   &* set                @"pImmutableSamplers"  |* VK_NULL
-descriptorSetLayoutBinding (InputAttachment _imageView) = createVk @VkDescriptorSetLayoutBinding
-   $ set                @"binding"             |* 1
+descriptorSetLayoutBinding (InputAttachment binding _imageView) = createVk @VkDescriptorSetLayoutBinding
+   $ set                @"binding"             |* binding
   &* set                @"descriptorType"      |* VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
   &* set                @"descriptorCount"     |* 1
   &* set                @"stageFlags"          |* VK_SHADER_STAGE_FRAGMENT_BIT
   &* set                @"pImmutableSamplers"  |* VK_NULL
-descriptorSetLayoutBinding (ImageSampler _imageView sampler) = createVk @VkDescriptorSetLayoutBinding
-   $ set                @"binding"             |* 1
+descriptorSetLayoutBinding (ImageSampler binding _imageView sampler) = createVk @VkDescriptorSetLayoutBinding
+   $ set                @"binding"             |* binding
   &* set                @"descriptorType"      |* VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
   &* set                @"descriptorCount"     |* 1
   &* set                @"stageFlags"          |* VK_SHADER_STAGE_FRAGMENT_BIT
@@ -76,13 +76,13 @@ descriptorSetLayoutBinding (ImageSampler _imageView sampler) = createVk @VkDescr
 descriptorPoolSize
   :: Resource
   -> VkDescriptorPoolSize
-descriptorPoolSize (UniformBuffer _buffer) = createVk @VkDescriptorPoolSize
+descriptorPoolSize (UniformBuffer _ _buffer) = createVk @VkDescriptorPoolSize
   $ set                @"type"                |* VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
  &* set                @"descriptorCount"     |* 1
-descriptorPoolSize (InputAttachment _imageView) = createVk @VkDescriptorPoolSize
+descriptorPoolSize (InputAttachment _ _imageView) = createVk @VkDescriptorPoolSize
   $ set                @"type"                |* VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
  &* set                @"descriptorCount"     |* 1
-descriptorPoolSize (ImageSampler _imageView _sampler) = createVk @VkDescriptorPoolSize
+descriptorPoolSize (ImageSampler _ _imageView _sampler) = createVk @VkDescriptorPoolSize
   $ set                @"type"                |* VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
  &* set                @"descriptorCount"     |* 1
 
@@ -118,16 +118,15 @@ mkDescriptorPoolCreateInfo sizes = createVk @VkDescriptorPoolCreateInfo
 -- | with a single pool and layout.
 mkDescriptorSetAllocateInfo
   :: VkDescriptorPool
-  -> V.Vector VkDescriptorSetLayout
-  -> (VkDescriptorSetAllocateInfo, Int)
-mkDescriptorSetAllocateInfo pool layouts = (descriptorSetAllocateInfo, descriptorSetCount)
-  where descriptorSetCount = V.length layouts
-        descriptorSetAllocateInfo = createVk @VkDescriptorSetAllocateInfo
+  -> VkDescriptorSetLayout
+  -> VkDescriptorSetAllocateInfo
+mkDescriptorSetAllocateInfo pool layout = descriptorSetAllocateInfo
+  where descriptorSetAllocateInfo = createVk @VkDescriptorSetAllocateInfo
            $ set        @"sType"               |* VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO
           &* set        @"pNext"               |* VK_NULL
           &* set        @"descriptorPool"      |* pool
-          &* set        @"descriptorSetCount"  |* fromIntegral descriptorSetCount
-          &* setListRef @"pSetLayouts"         |* V.toList layouts
+          &* set        @"descriptorSetCount"  |* 1
+          &* setListRef @"pSetLayouts"         |* [layout]
 
 
 descriptorBufferInfo
@@ -153,33 +152,33 @@ mkWriteDescriptorSet
   :: VkDescriptorSet
   -> Resource
   -> VkWriteDescriptorSet
-mkWriteDescriptorSet descriptorSet (UniformBuffer buffer) = createVk @VkWriteDescriptorSet
+mkWriteDescriptorSet descriptorSet (UniformBuffer binding buffer) = createVk @VkWriteDescriptorSet
    $ set                @"sType"               |* VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET
   &* set                @"pNext"               |* VK_NULL
   &* set                @"dstSet"              |* descriptorSet
-  &* set                @"dstBinding"          |* 0
+  &* set                @"dstBinding"          |* binding
   &* set                @"dstArrayElement"     |* 0
   &* set                @"descriptorCount"     |* 1
   &* set                @"descriptorType"      |* VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
   &* set                @"pImageInfo"          |* VK_NULL
   &* setVkRef           @"pBufferInfo"         |* descriptorBufferInfo buffer
   &* set                @"pTexelBufferView"    |* VK_NULL
-mkWriteDescriptorSet descriptorSet (InputAttachment imageView)= createVk @VkWriteDescriptorSet
+mkWriteDescriptorSet descriptorSet (InputAttachment binding imageView)= createVk @VkWriteDescriptorSet
    $ set                @"sType"               |* VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET
   &* set                @"pNext"               |* VK_NULL
   &* set                @"dstSet"              |* descriptorSet
-  &* set                @"dstBinding"          |* 1
+  &* set                @"dstBinding"          |* binding
   &* set                @"dstArrayElement"     |* 0
   &* set                @"descriptorCount"     |* 1
   &* set                @"descriptorType"      |* VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
   &* setVkRef           @"pImageInfo"          |* descriptorImageInfo imageView
   &* set                @"pBufferInfo"         |* VK_NULL
   &* set                @"pTexelBufferView"    |* VK_NULL
-mkWriteDescriptorSet descriptorSet (ImageSampler imageView _sampler) = createVk @VkWriteDescriptorSet
+mkWriteDescriptorSet descriptorSet (ImageSampler binding imageView _sampler) = createVk @VkWriteDescriptorSet
    $ set                @"sType"                   |* VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET
   &* set                @"pNext"                   |* VK_NULL
   &* set                @"dstSet"                  |* descriptorSet
-  &* set                @"dstBinding"              |* 1
+  &* set                @"dstBinding"              |* binding
   &* set                @"dstArrayElement"         |* 0
   &* set                @"descriptorCount"         |* 1
   &* set                @"descriptorType"          |* VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER

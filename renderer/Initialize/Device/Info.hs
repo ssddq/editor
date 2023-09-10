@@ -31,6 +31,7 @@ mkDeviceCreateInfo queueFamilyIndex layers extensions = createVk @VkDeviceCreate
            $ set                 @"sampleRateShading"   |* VK_TRUE
           &* set                 @"samplerAnisotropy"   |* VK_TRUE
           &* set                 @"multiDrawIndirect"   |* VK_TRUE
+          &* set                 @"independentBlend"    |* VK_TRUE
         queueCreateInfo = createVk @VkDeviceQueueCreateInfo
            $ set                 @"sType"               |* VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO
           &* set                 @"pNext"               |* VK_NULL

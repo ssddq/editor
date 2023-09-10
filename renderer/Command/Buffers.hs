@@ -51,11 +51,11 @@ createDrawBuffers vk = do
   let createFramebuffers = \image -> do
         let framebufferCreateInfo0 = mkFramebufferCreateInfo
                                        |- renderPass0.handle
-                                       |- [colorAttachment.imageView, sampleAttachment.imageView]
+                                       |- [colorAttachment0.imageView, colorAttachment1.imageView, sampleAttachment.imageView]
                                        |- constants.render
             framebufferCreateInfo1 = mkFramebufferCreateInfo
                                        |- renderPass1.handle
-                                       |- [image, colorAttachment.imageView, sampleAttachment.imageView]
+                                       |- [image, colorAttachment0.imageView, sampleAttachment.imageView]
                                        |- constants.present
         framebuffer0 <- perform $ vkCreateFramebuffer
                                     |- device
@@ -172,7 +172,7 @@ recreateFramebuffers vk = do
          &* set                @"flags"             |* VK_ZERO_FLAGS
          &* set                @"renderPass"        |* renderPass0.handle
          &* setListCountAndRef @"attachmentCount"-- |*
-                               @"pAttachments"      |* [colorAttachment.imageView, sampleAttachment.imageView]
+                               @"pAttachments"      |* [colorAttachment0.imageView, colorAttachment1.imageView, sampleAttachment.imageView]
          &* set                @"width"             |* constants.render.width
          &* set                @"height"            |* constants.render.height
          &* set                @"layers"            |* 1
@@ -182,7 +182,7 @@ recreateFramebuffers vk = do
          &* set                @"flags"             |* VK_ZERO_FLAGS
          &* set                @"renderPass"        |* renderPass1.handle
          &* setListCountAndRef @"attachmentCount"-- |*
-                               @"pAttachments"      |* [img, colorAttachment.imageView, sampleAttachment.imageView]
+                               @"pAttachments"      |* [img, colorAttachment0.imageView, sampleAttachment.imageView]
          &* set                @"width"             |* constants.present.width
          &* set                @"height"            |* constants.present.height
          &* set                @"layers"            |* 1

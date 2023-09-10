@@ -33,10 +33,7 @@ samplerCreateInfo = createVk @VkSamplerCreateInfo
   &* set @"unnormalizedCoordinates" |* VK_TRUE
 
 pattern SAMPLE_FORMAT :: VkFormat
-pattern SAMPLE_FORMAT = VK_FORMAT_B8G8R8A8_SRGB
-
-pattern ATTACHMENT_FORMAT :: VkFormat
-pattern ATTACHMENT_FORMAT = VK_FORMAT_R16G16_SFLOAT
+pattern SAMPLE_FORMAT = VK_FORMAT_B8G8R8A8_UNORM
 
 -- | ImageView create info for a standard 2D image view into a given image.
 mkImageViewCreateInfo

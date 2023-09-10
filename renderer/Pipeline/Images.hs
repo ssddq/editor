@@ -27,12 +27,13 @@ createColorAttachmentImage
   :: VkDevice
   -> VmaAllocator
   -> GraphicsQueueFamily
+  -> VkFormat
   -> (Word32, Word32)     -- (width, height)
   -> IO Attachment
-createColorAttachmentImage device allocator queueFamilyIndex (width, height) = do
+createColorAttachmentImage device allocator queueFamilyIndex format (width, height) = do
   let imageCreateInfo = mkImageCreateInfo
                           |- ColorAttachmentImage
-                          |- ATTACHMENT_FORMAT
+                          |- format
                           |- (width, height)
                           |- queueFamilyIndex
   ( image, allocation, _ ) <- perform3 $ vmaCreateImage
@@ -41,7 +42,7 @@ createColorAttachmentImage device allocator queueFamilyIndex (width, height) = d
                                            |- p allocationCreateInfo
   let imageViewCreateInfo = mkImageViewCreateInfo
                               |- image
-                              |- ATTACHMENT_FORMAT
+                              |- format
   imageView <- perform $ vkCreateImageView
                            |- device
                            |- p imageViewCreateInfo

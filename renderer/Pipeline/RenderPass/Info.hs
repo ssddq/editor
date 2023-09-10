@@ -92,12 +92,13 @@ mkAttachmentDescription0 load store = createVk @VkAttachmentDescription
 -- | (loadOp , initialLayout) and
 -- | (storeOp, finalLayout  ).
 mkAttachmentDescription
-  :: (VkAttachmentLoadOp, VkImageLayout)
+  :: VkFormat
+  -> (VkAttachmentLoadOp, VkImageLayout)
   -> (VkAttachmentStoreOp, VkImageLayout)
   -> VkAttachmentDescription
-mkAttachmentDescription load store = createVk @VkAttachmentDescription
+mkAttachmentDescription format load store = createVk @VkAttachmentDescription
    $ set                @"flags"          |* VK_ZERO_FLAGS
-  &* set                @"format"         |* VK_FORMAT_B8G8R8A8_SRGB
+  &* set                @"format"         |* format
   &* set                @"samples"        |* VK_SAMPLE_COUNT_1_BIT
   &* set                @"loadOp"         |* loadOp
   &* set                @"storeOp"        |* storeOp

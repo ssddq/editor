@@ -26,21 +26,23 @@ createDescriptors
 createDescriptors device resources = do
   let descriptorPoolCreateInfo = mkDescriptorPoolCreateInfo $ map descriptorPoolSize resources
       (descriptorSetLayoutCreateInfo, bindingCount) = mkDescriptorSetLayoutCreateInfo $ map descriptorSetLayoutBinding resources
-  layouts <- performArray bindingCount $ vkCreateDescriptorSetLayout
-                                           |- device
-                                           |- p descriptorSetLayoutCreateInfo
-                                           |- VK_NULL
+  layout <- perform $ vkCreateDescriptorSetLayout
+                        |- device
+                        |- p descriptorSetLayoutCreateInfo
+                        |- VK_NULL
   pool <- perform $ vkCreateDescriptorPool
                       |- device
                       |- p descriptorPoolCreateInfo
                       |- VK_NULL
-  let (descriptorSetAllocateInfo, descriptorSetCount) = mkDescriptorSetAllocateInfo
-                                                          |- pool
-                                                          |- layouts
-  sets <- performArray descriptorSetCount $ vkAllocateDescriptorSets
-                                              |- device
-                                              |- p descriptorSetAllocateInfo
-  let writeDescriptorSets = V.zipWith mkWriteDescriptorSet sets $ V.fromList resources
+  let descriptorSetAllocateInfo = mkDescriptorSetAllocateInfo
+                                    |- pool
+                                    |- layout
+  set <- perform $ vkAllocateDescriptorSets
+                     |- device
+                     |- p descriptorSetAllocateInfo
+  let writeDescriptorSets = V.fromList $ map
+                                |- mkWriteDescriptorSet set
+                                |- resources
   withVector writeDescriptorSets
     $ \n pDescriptorWrites -> vkUpdateDescriptorSets
                                 |- device
@@ -48,13 +50,13 @@ createDescriptors device resources = do
                                 |- pDescriptorWrites
                                 |- 0
                                 |- VK_NULL
-  return $ Descriptors { sets
+  return $ Descriptors { set
                        , pool
-                       , layouts
+                       , layout
                        }
 
 empty :: IO Descriptors
-empty = pure $ Descriptors { sets    = V.empty
-                           , pool    = VK_NULL_HANDLE
-                           , layouts = V.empty
+empty = pure $ Descriptors { set    = VK_NULL_HANDLE
+                           , pool   = VK_NULL_HANDLE
+                           , layout = VK_NULL_HANDLE
                            }

@@ -27,7 +27,7 @@ mkSwapchainCreateInfo surface imageCount width height queueFamilyIndex oldSwapch
    &* set                @"flags"                 |* VK_ZERO_FLAGS
    &* set                @"surface"               |* surface
    &* set                @"minImageCount"         |* imageCount
-   &* set                @"imageFormat"           |* VK_FORMAT_B8G8R8A8_SRGB
+   &* set                @"imageFormat"           |* VK_FORMAT_B8G8R8A8_UNORM
    &* set                @"imageColorSpace"       |* VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
    &* set                @"imageExtent"           |* imageExtent width height
    &* set                @"imageArrayLayers"      |* 1
@@ -54,7 +54,7 @@ mkImageViewCreateInfo image = createVk @VkImageViewCreateInfo
    &* set             @"flags"            |* VK_ZERO_FLAGS
    &* set             @"image"            |* image
    &* set             @"viewType"         |* VK_IMAGE_VIEW_TYPE_2D
-   &* set             @"format"           |* VK_FORMAT_B8G8R8A8_SRGB
+   &* set             @"format"           |* VK_FORMAT_B8G8R8A8_UNORM
    &* set             @"components"       |* components
    &* set             @"subresourceRange" |* subresourceRange
   where components = createVk @VkComponentMapping

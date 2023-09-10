@@ -37,8 +37,8 @@ selectGraphicsQueueFamily physicalDevice = do
              Nothing               -> error "Could not find graphics queue family."
 
 -- | Creates a logical device with the given device layers and extensions.
--- | The logical device is created along with a single graphics queue.
--- | The logical device has the sample shading and sampler anisotropy features enabled.
+-- | The logical device is created along with a single graphics queue,
+-- | and has sample shading, sampler anisotropy, indirect multi-draw and independen blending features enabled.
 createDevice
   :: [String]
   -> [CString]

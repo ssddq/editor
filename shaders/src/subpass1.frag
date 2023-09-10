@@ -6,27 +6,30 @@
 // in the previous subpass, and use that to determine whether a fragment is colored
 // or not.
 
-layout(input_attachment_index = 0, set = 0, binding = 1) uniform subpassInput inColor;
+layout(input_attachment_index = 0, set = 0, binding = 1) uniform subpassInput inWind;
+layout(input_attachment_index = 0, set = 0, binding = 2) uniform subpassInput inColor;
 
 layout(location = 0) out vec4 outColor;
 
 
-void main() 
+void main()
 {
-  vec2 color = subpassLoad(inColor).rg;
-  
-  // Evaluate the winding number using the components 
+  vec2 wind  = subpassLoad(inWind).rg;
+  vec4 color = subpassLoad(inColor);
+
+  // Evaluate the winding number using the components
   // of the color attachment output of the previous subpass (renderpass 1, subpass 0).
-  // The x-coordinate counts the number of times the curve was moving 
+  // The x-coordinate counts the number of times the curve was moving
   // counterclockwise around the fragment being drawn, while
   // the y-coordinate counts the number of times the curve was moving
   // clockwise around the fragment being drawn.
 
-  int windingNumber = int( round(color.x ) ) 
-                    - int( round(color.y ) );
+  int windingNumber = int( round(wind.x ) )
+                    - int( round(wind.y ) );
 
   // Only fragments with a positive windingNumber are ultimately shaded.
 
   outColor = abs( sign(windingNumber) )
-           * vec4( 1.0, 1.0, 1.0, 1.0 );
+           * color
+           + (1 - abs( sign(windingNumber) )) * vec4(17/255.0, 17/255.0, 27/255.0, 1);
 }

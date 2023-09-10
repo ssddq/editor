@@ -22,24 +22,34 @@ createRenderPass
 createRenderPass device = do
   let subpassDescription0 = mkSubpassDescription
                               |- []
-                              |- [colorReference 0]
+                              |- [colorReference 0, colorReference 1]
       subpassDescription1 = mkSubpassDescription
-                              |- [inputReference 0]
-                              |- [colorReference 1]
-      attachment0 = mkAttachmentDescription0
+                              |- [inputReference 0, inputReference 1]
+                              |- [colorReference 2]
+      attachment0 = mkAttachmentDescription
+                      |- VK_FORMAT_R16G16_SFLOAT
                       |- (CLEAR, UNDEFINED)
                       |- (STORE, INPUT    )
       attachment1 = mkAttachmentDescription
+                      |- VK_FORMAT_R8G8B8A8_UNORM
+                      |- (CLEAR, UNDEFINED)
+                      |- (STORE, INPUT    )
+      attachment2 = mkAttachmentDescription
+                      |- VK_FORMAT_B8G8R8A8_UNORM
                       |- (CLEAR, UNDEFINED)
                       |- (STORE, INPUT    )
       subpassDependency01 = mkSubpassDependency
                               |- BY_REGION
                               |- (0, COLOR_ATTACHMENT_OUTPUT, COLOR_ATTACHMENT_READ)
                               |- (1, FRAGMENT_SHADER        , INPUT_ATTACHMENT_READ)
+      subpassDependency11 = mkSubpassDependency
+                              |- BY_REGION
+                              |- (1, COLOR_ATTACHMENT_OUTPUT, COLOR_ATTACHMENT_READ)
+                              |- (1, FRAGMENT_SHADER        , INPUT_ATTACHMENT_READ)
       renderPassCreateInfo = mkRenderPassCreateInfo
-                               |- [ attachment0, attachment1 ]
+                               |- [ attachment0, attachment1, attachment2 ]
                                |- [ subpassDescription0, subpassDescription1 ]
-                               |- [ subpassDependency01 ]
+                               |- [ subpassDependency01, subpassDependency11 ]
   perform $ vkCreateRenderPass
               |- device
               |- p renderPassCreateInfo
@@ -57,12 +67,15 @@ createRenderPass1 device = do
                               |- [inputReference 2]
                               |- [colorReference 0]
       attachment0 = mkAttachmentDescription
+                      |- VK_FORMAT_B8G8R8A8_UNORM
                       |- (CLEAR, UNDEFINED)
                       |- (STORE, PRESENT  )
-      attachment1 = mkAttachmentDescription0
+      attachment1 = mkAttachmentDescription
+                      |- VK_FORMAT_R16G16_SFLOAT
                       |- (LOAD           , INPUT)
                       |- (STORE_DONT_CARE, INPUT)
       attachment2 = mkAttachmentDescription
+                      |- VK_FORMAT_B8G8R8A8_UNORM
                       |- (LOAD , INPUT)
                       |- (STORE, INPUT)
       subpassDependency0 = mkSubpassDependency

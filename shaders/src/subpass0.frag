@@ -10,10 +10,13 @@ layout(location = 0) in vec2  coordinates;
 layout(location = 1) in float fill;
 layout(location = 2) in float orientationBase;
 layout(location = 3) in float orientationControl;
+layout(location = 4) in vec4  color;
 
-layout(location = 0) out vec2 outColor;
+layout(location = 0) out vec2 outWind;
+layout(location = 1) out vec4 outColor;
 
-void main() 
+
+void main()
 {
   // This fragment shader writes to the color attachment with additive blending,
   // to record a winding number around the fragment.
@@ -23,7 +26,7 @@ void main()
   // a given fragment can be computed in the following subpass as
   // 256*(outColor.x - outColor.y).
 
-  // For 'base' triangles, 
+  // For 'base' triangles,
   // signBase = 1 indicates a counterclockwise orientation, and
   // signBase = 0 indicates a clockwise orientation.
 
@@ -34,7 +37,7 @@ void main()
                        ) ;
 
   // For 'control' triangles,
-  // the (u,v)-coordinates are the normalized coordinates 
+  // the (u,v)-coordinates are the normalized coordinates
   // of the first and third points in the draw call
   // measured from the control point.
   // underQuadratic = 1 indicates that the fragment lies underneath
@@ -45,13 +48,13 @@ void main()
   float u = coordinates.x;
   float v = coordinates.y;
 
-//  float underQuadratic = -sign( pow(v - u - 1.0, 2.0) 
+//  float underQuadratic = -sign( pow(v - u - 1.0, 2.0)
 //                              - 4.0*u
 //                              );
 
   float underQuadratic = -sign(float(dot(vec2(v-u-1.0, 4.0*u), vec2(v-u-1.0, -1.0))));
 
-  // For 'control' triangles, 
+  // For 'control' triangles,
   // signControl = 1 indicates a counterclockwise orientation, and
   // signControl = 0 indicates a clockwise orientation.
   // However, the contributions are interchanged since
@@ -60,7 +63,7 @@ void main()
 
   float signControl = sign(orientationControl);
 
-  vec2 fillControl  = max ( underQuadratic, 0 ) 
+  vec2 fillControl  = max ( underQuadratic, 0 )
                     * vec2( 1.0 * (1.0 - signControl)
                           , 1.0 * signControl
                           ) ;
@@ -71,6 +74,11 @@ void main()
 
   float drawFull = sign(fill);
 
-  outColor =        drawFull  * fillBase
-           + (1.0 - drawFull) * fillControl;
+  outWind =        drawFull  * fillBase
+          + (1.0 - drawFull) * fillControl;
+
+
+  outColor = color;
 }
+
+

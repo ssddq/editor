@@ -13,9 +13,41 @@ import Data.Bits
 import Data.ByteString      qualified as BS
 import Data.ByteString.Lazy qualified as BL
 
-import Data.Vector qualified as V
-
 -- | Additive color attachment color and alpha blending.
+
+colorBlendState0 :: VkPipelineColorBlendStateCreateInfo
+colorBlendState0 = createVk @VkPipelineColorBlendStateCreateInfo
+   $ set                @"sType"               |* VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO
+  &* set                @"pNext"               |* VK_NULL
+  &* set                @"flags"               |* VK_ZERO_FLAGS
+  &* set                @"logicOpEnable"       |* VK_FALSE
+  &* set                @"logicOp"             |* VK_LOGIC_OP_COPY
+  &* setListCountAndRef @"attachmentCount"  -- |*
+                        @"pAttachments"        |* [colorBlendAttachmentState0, colorBlendAttachmentState1]
+  &* setAt              @"blendConstants" @0   |* 0
+  &* setAt              @"blendConstants" @1   |* 0
+  &* setAt              @"blendConstants" @2   |* 0
+  &* setAt              @"blendConstants" @3   |* 0
+  where colorBlendAttachmentState0 = createVk @VkPipelineColorBlendAttachmentState
+          $ set @"colorWriteMask"       |*      VK_COLOR_COMPONENT_R_BIT .|. VK_COLOR_COMPONENT_G_BIT
+                                            .|. VK_COLOR_COMPONENT_B_BIT .|. VK_COLOR_COMPONENT_A_BIT
+         &* set @"blendEnable"          |* VK_TRUE
+         &* set @"srcColorBlendFactor"  |* VK_BLEND_FACTOR_ONE
+         &* set @"dstColorBlendFactor"  |* VK_BLEND_FACTOR_ONE
+         &* set @"colorBlendOp"         |* VK_BLEND_OP_ADD
+         &* set @"srcAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
+         &* set @"dstAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
+         &* set @"alphaBlendOp"         |* VK_BLEND_OP_ADD
+        colorBlendAttachmentState1 = createVk @VkPipelineColorBlendAttachmentState
+          $ set @"colorWriteMask"       |*      VK_COLOR_COMPONENT_R_BIT .|. VK_COLOR_COMPONENT_G_BIT
+                                            .|. VK_COLOR_COMPONENT_B_BIT .|. VK_COLOR_COMPONENT_A_BIT
+         &* set @"blendEnable"          |* VK_FALSE
+         &* set @"srcColorBlendFactor"  |* VK_BLEND_FACTOR_ONE
+         &* set @"dstColorBlendFactor"  |* VK_BLEND_FACTOR_ZERO
+         &* set @"colorBlendOp"         |* VK_BLEND_OP_ADD
+         &* set @"srcAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
+         &* set @"dstAlphaBlendFactor"  |* VK_BLEND_FACTOR_ZERO
+         &* set @"alphaBlendOp"         |* VK_BLEND_OP_ADD
 
 colorBlendState :: VkPipelineColorBlendStateCreateInfo
 colorBlendState = createVk @VkPipelineColorBlendStateCreateInfo
@@ -154,14 +186,26 @@ mkGraphicsPipelineCreateInfo vertModule fragModule subpass
 -- | Allows for push constants corresponding to the window size.
 
 mkPipelineLayoutCreateInfo
-  :: V.Vector VkDescriptorSetLayout
+  :: VkDescriptorSetLayout
   -> VkPipelineLayoutCreateInfo
-mkPipelineLayoutCreateInfo descriptorSetLayouts = createVk @VkPipelineLayoutCreateInfo
+mkPipelineLayoutCreateInfo VK_NULL_HANDLE = createVk @VkPipelineLayoutCreateInfo
    $ set                @"sType"                     |* VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
   &* set                @"pNext"                     |* VK_NULL
   &* set                @"flags"                     |* VK_ZERO_FLAGS
   &* setListCountAndRef @"setLayoutCount"         -- |*
-                        @"pSetLayouts"               |* V.toList descriptorSetLayouts
+                        @"pSetLayouts"               |* []
+  &* setListCountAndRef @"pushConstantRangeCount" -- |*
+                        @"pPushConstantRanges"       |* [pushConstants]
+  where pushConstants = createVk @VkPushConstantRange
+          $ set @"stageFlags" |* VK_SHADER_STAGE_VERTEX_BIT
+         &* set @"offset"     |* 0
+         &* set @"size"       |* 16
+mkPipelineLayoutCreateInfo descriptorSetLayout = createVk @VkPipelineLayoutCreateInfo
+   $ set                @"sType"                     |* VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+  &* set                @"pNext"                     |* VK_NULL
+  &* set                @"flags"                     |* VK_ZERO_FLAGS
+  &* setListCountAndRef @"setLayoutCount"         -- |*
+                        @"pSetLayouts"               |* [descriptorSetLayout]
   &* setListCountAndRef @"pushConstantRangeCount" -- |*
                         @"pPushConstantRanges"       |* [pushConstants]
   where pushConstants = createVk @VkPushConstantRange
@@ -248,7 +292,7 @@ vertexInputState0 = createVk @VkPipelineVertexInputStateCreateInfo
   &* setListCountAndRef @"vertexBindingDescriptionCount"   -- |*
                         @"pVertexBindingDescriptions"         |* [bindingDesc0, bindingDesc1]
   &* setListCountAndRef @"vertexAttributeDescriptionCount" -- |*
-                        @"pVertexAttributeDescriptions"       |* [vertX, vertY, vertDesc, posX, posY, xx, xy, yx, yy, fontSize]
+                        @"pVertexAttributeDescriptions"       |* [vertX, vertY, vertDesc, posX, posY, xx, xy, yx, yy, fontSize, red, green, blue, alpha]
   where sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
         bindingDesc0 = createVk @VkVertexInputBindingDescription
           $ set                @"binding"              |* 0
@@ -271,7 +315,7 @@ vertexInputState0 = createVk @VkPipelineVertexInputStateCreateInfo
          &* set                @"offset"               |* 8
         bindingDesc1 = createVk @VkVertexInputBindingDescription
           $ set                @"binding"              |* 1
-         &* set                @"stride"               |* 28
+         &* set                @"stride"               |* (fromIntegral $ sizeOf @DrawData undefined)
          &* set                @"inputRate"            |* VK_VERTEX_INPUT_RATE_INSTANCE
         posX = createVk @VkVertexInputAttributeDescription
           $ set                @"binding"              |* 1
@@ -308,6 +352,26 @@ vertexInputState0 = createVk @VkPipelineVertexInputStateCreateInfo
          &* set                @"location"             |* 9
          &* set                @"format"               |* VK_FORMAT_R32_SFLOAT
          &* set                @"offset"               |* 24
+        red = createVk @VkVertexInputAttributeDescription
+          $ set                @"binding"              |* 1
+         &* set                @"location"             |* 10
+         &* set                @"format"               |* VK_FORMAT_R8_UNORM
+         &* set                @"offset"               |* 28
+        green = createVk @VkVertexInputAttributeDescription
+          $ set                @"binding"              |* 1
+         &* set                @"location"             |* 11
+         &* set                @"format"               |* VK_FORMAT_R8_UNORM
+         &* set                @"offset"               |* 29
+        blue = createVk @VkVertexInputAttributeDescription
+          $ set                @"binding"              |* 1
+         &* set                @"location"             |* 12
+         &* set                @"format"               |* VK_FORMAT_R8_UNORM
+         &* set                @"offset"               |* 30
+        alpha = createVk @VkVertexInputAttributeDescription
+          $ set                @"binding"              |* 1
+         &* set                @"location"             |* 13
+         &* set                @"format"               |* VK_FORMAT_R8_UNORM
+         &* set                @"offset"               |* 31
 
 -- | Specifies how vertex data is read and passed to the shader.
 -- | Currently, there is a single binding in position 0 with
@@ -375,7 +439,7 @@ withPipelineCreateInfo device descriptors shaders renderpass subpass
   vertModule <- createShaderModule device vert
   fragModule <- createShaderModule device frag
   let pipelineLayoutCreateInfo   = mkPipelineLayoutCreateInfo
-                                     |- descriptors.layouts
+                                     |- descriptors.layout
   layout <- perform $ vkCreatePipelineLayout
                         |- device
                         |- p pipelineLayoutCreateInfo
@@ -399,3 +463,112 @@ withPipelineCreateInfo device descriptors shaders renderpass subpass
     |- VK_NULL
   return $ b
   where Shaders vert frag = shaders
+
+
+withPipelineCreateInfo0
+  :: VkDevice
+  -> Descriptors
+  -> Shaders
+  -> VkRenderPass
+  -> Word32                                                     -- subpass
+  -> VkPipelineMultisampleStateCreateInfo
+  -> VkPipelineVertexInputStateCreateInfo
+  -> (VkPipelineLayout -> VkGraphicsPipelineCreateInfo -> IO b)
+  -> IO b
+withPipelineCreateInfo0 device descriptors shaders renderpass subpass
+                         multisampleState vertexInputState continuation = do
+  vertModule <- createShaderModule device vert
+  fragModule <- createShaderModule device frag
+  let pipelineLayoutCreateInfo   = mkPipelineLayoutCreateInfo
+                                     |- descriptors.layout
+  layout <- perform $ vkCreatePipelineLayout
+                        |- device
+                        |- p pipelineLayoutCreateInfo
+                        |- VK_NULL
+  let graphicsPipelineCreateInfo = mkGraphicsPipelineCreateInfo0
+                                     |- vertModule
+                                     |- fragModule
+                                     |- subpass
+                                     |- layout
+                                     |- renderpass
+                                     |- multisampleState
+                                     |- vertexInputState
+  b <- continuation layout graphicsPipelineCreateInfo
+  vkDestroyShaderModule
+    |- device
+    |- vertModule
+    |- VK_NULL
+  vkDestroyShaderModule
+    |- device
+    |- fragModule
+    |- VK_NULL
+  return $ b
+  where Shaders vert frag = shaders
+
+
+mkGraphicsPipelineCreateInfo0
+  :: VkShaderModule                       -- vertex shader module
+  -> VkShaderModule                       -- fragment shader module
+  -> Word32                               -- subpass
+  -> VkPipelineLayout
+  -> VkRenderPass
+  -> VkPipelineMultisampleStateCreateInfo
+  -> VkPipelineVertexInputStateCreateInfo
+  -> VkGraphicsPipelineCreateInfo
+mkGraphicsPipelineCreateInfo0 vertModule fragModule subpass
+                             layout     renderPass multisampleState
+                             vertexInputState =
+  createVk @VkGraphicsPipelineCreateInfo
+     $ set                @"sType"                |* VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO
+    &* set                @"pNext"                |* VK_NULL
+    &* set                @"flags"                |* VK_ZERO_FLAGS
+    &* setListCountAndRef @"stageCount"        -- |*
+                          @"pStages"              |* [ vertStageInfo vertModule
+                                                     , fragStageInfo fragModule
+                                                     ]
+    &* setVkRef           @"pVertexInputState"    |* vertexInputState
+    &* setVkRef           @"pInputAssemblyState"  |* inputAssemblyState
+    &* set                @"pTessellationState"   |* VK_NULL
+    &* setVkRef           @"pViewportState"       |* viewportState
+    &* setVkRef           @"pRasterizationState"  |* rasterizationState
+    &* setVkRef           @"pMultisampleState"    |* multisampleState
+    &* set                @"pDepthStencilState"   |* VK_NULL
+    &* setVkRef           @"pColorBlendState"     |* colorBlendState0
+    &* setVkRef           @"pDynamicState"        |* dynamicState
+    &* set                @"layout"               |* layout
+    &* set                @"renderPass"           |* renderPass
+    &* set                @"subpass"              |* subpass
+    &* set                @"basePipelineHandle"   |* VK_NULL_HANDLE
+    &* set                @"basePipelineIndex"    |* -1
+    where viewportState = createVk @VkPipelineViewportStateCreateInfo
+            $ set                @"sType"           |* VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
+           &* set                @"pNext"           |* VK_NULL
+           &* set                @"flags"           |* VK_ZERO_FLAGS
+           &* setListCountAndRef @"viewportCount"-- |*
+                                 @"pViewports"      |* [viewport]
+           &* setListCountAndRef @"scissorCount" -- |*                                                     )
+                                 @"pScissors"       |* [scissor]
+          viewport = createVk @VkViewport
+            $ set                @"x"               |* 0
+           &* set                @"y"               |* 0
+           &* set                @"width"           |* 0
+           &* set                @"height"          |* 0
+           &* set                @"minDepth"        |* 0
+           &* set                @"maxDepth"        |* 1
+          scissor = createVk @VkRect2D
+            $ set @"offset" |* offset
+           &* set @"extent" |* extent
+          offset = createVk @VkOffset2D
+            $ set @"x"      |* 0
+           &* set @"y"      |* 0
+          extent = createVk @VkExtent2D
+            $ set @"width"  |* 0
+           &* set @"height" |* 0
+          dynamicState = createVk @VkPipelineDynamicStateCreateInfo
+            $ set @"sType" |* VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO
+           &* set @"pNext" |* VK_NULL
+           &* set @"flags" |* VK_ZERO_FLAGS
+           &* setListCountAndRef @"dynamicStateCount" -- |*
+                                 @"pDynamicStates"       |* [ VK_DYNAMIC_STATE_VIEWPORT
+                                                            , VK_DYNAMIC_STATE_SCISSOR
+                                                            ]

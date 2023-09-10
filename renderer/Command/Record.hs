@@ -51,10 +51,10 @@ cmdRenderPass0 drawCount buffers vk = do
     |- font.index.buffer
     |- 0
     |- VK_INDEX_TYPE_UINT32
-  bindDescriptorSets
+  bindDescriptorSet
     |- commandBuffer
     |- renderPass0.subpass0.pipeline.layout
-    |- renderPass0.subpass0.descriptors.sets
+    |- renderPass0.subpass0.descriptors.set
   with (present, unitsPerEmX2, ppi) $ (. castPtr)
     $ vkCmdPushConstants
         |- commandBuffer
@@ -84,10 +84,10 @@ cmdRenderPass0 drawCount buffers vk = do
                     |- commandBuffer
                     |- 0
                     |- 1
-  bindDescriptorSets
+  bindDescriptorSet
     |- commandBuffer
     |- renderPass0.subpass1.pipeline.layout
-    |- renderPass0.subpass1.descriptors.sets
+    |- renderPass0.subpass1.descriptors.set
   with (present, unitsPerEmX2, ppi) $ (. castPtr)
     $ vkCmdPushConstants
         |- commandBuffer
@@ -165,10 +165,10 @@ cmdRenderPass1 buffers vk = do
     |- fullscreenBuffer.index.buffer
     |- 0
     |- VK_INDEX_TYPE_UINT32
-  bindDescriptorSets
+  bindDescriptorSet
     |- commandBuffer
     |- renderPass1.subpass0.pipeline.layout
-    |- renderPass1.subpass0.descriptors.sets
+    |- renderPass1.subpass0.descriptors.set
   with (present, unitsPerEmX2, ppi) $ (. castPtr)
     $ vkCmdPushConstants
         |- commandBuffer

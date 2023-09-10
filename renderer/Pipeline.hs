@@ -28,10 +28,17 @@ createRenderPipeline
 createRenderPipeline (shaders0, shaders1, shaders2) vk = do
   sampler <- Images.createSampler
                       |- device
-  colorAttachment  <- Images.createColorAttachmentImage
+  colorAttachment0 <- Images.createColorAttachmentImage
                                |- device
                                |- allocator
                                |- queueFamilyIndex
+                               |- VK_FORMAT_R16G16_SFLOAT
+                               |- (render.width, render.height)
+  colorAttachment1 <- Images.createColorAttachmentImage
+                               |- device
+                               |- allocator
+                               |- queueFamilyIndex
+                               |- VK_FORMAT_R8G8B8A8_UNORM
                                |- (render.width, render.height)
   sampleAttachment <- Images.createSampleImage
                                |- device
@@ -41,10 +48,12 @@ createRenderPipeline (shaders0, shaders1, shaders2) vk = do
   descriptors0 <- Descriptor.empty
   descriptors1 <- Descriptor.createDescriptors
                                |- device
-                               |- [InputAttachment colorAttachment.imageView]
+                               |- [ InputAttachment 1 colorAttachment0.imageView
+                                  , InputAttachment 2 colorAttachment1.imageView
+                                  ]
   descriptors2 <- Descriptor.createDescriptors
                                |- device
-                               |- [ImageSampler sampleAttachment.imageView sampler]
+                               |- [ ImageSampler 1 sampleAttachment.imageView sampler ]
   vkRenderPass0 <- RenderPass.createRenderPass
                                 |- device
   vkRenderPass1 <- RenderPass.createRenderPass1
@@ -72,7 +81,8 @@ createRenderPipeline (shaders0, shaders1, shaders2) vk = do
                                 }
   return $ vk { renderPipeline = RenderPipeline { renderPass0
                                                 , renderPass1
-                                                , colorAttachment
+                                                , colorAttachment0
+                                                , colorAttachment1
                                                 , sampleAttachment
                                                 , sampler
                                                 }
