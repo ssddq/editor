@@ -97,8 +97,8 @@ handle
   -> IO Vk { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
 handle (SDL.Event _time event) = case (event) of
   -- Window resize events
-  SDL.WindowSizeChangedEvent _                       -> recreateSwapchain >=> recreateFramebuffers >=> drawFrame
-  SDL.WindowRestoredEvent    _                       -> recreateSwapchain >=> recreateFramebuffers >=> drawFrame
+  SDL.WindowSizeChangedEvent _                       -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
+  SDL.WindowRestoredEvent    _                       -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
   -- Print filebuffer state for debugging
   Key SDL.KeycodeReturn Shift                        -> printFilebuffer
   -- Navigation
@@ -134,9 +134,7 @@ insertText
   :: T.Text
   -> Vk { stream = A Filebuffer }
   -> Vk { stream = A Filebuffer }
-insertText text vk = vk { stream }
-  where stream = vk.stream { textBuffer = filebuffer' }
-        filebuffer' = insert (T.encodeUtf8 text) vk.stream.textBuffer
+insertText text = updateFilebuffer $ insert (T.encodeUtf8 text)
 
 loadFile
   :: FilePath
