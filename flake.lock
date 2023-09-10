@@ -18,13 +18,13 @@
     "release": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-zz88bk5ss6V6h8bgYCh2TxcKRiBNmzJSsctlxiBJrS0=",
+        "narHash": "sha256-o8RxEYRapst5v8WnCHIaHV9t6gAn29qa21ix8QBz4F0=",
         "type": "file",
-        "url": "https://github.com/ssddq/editor/releases/download/0.0.3/editor_x86-64"
+        "url": "https://github.com/ssddq/editor/releases/download/binary/editor"
       },
       "original": {
         "type": "file",
-        "url": "https://github.com/ssddq/editor/releases/download/0.0.3/editor_x86-64"
+        "url": "https://github.com/ssddq/editor/releases/download/binary/editor"
       }
     },
     "root": {

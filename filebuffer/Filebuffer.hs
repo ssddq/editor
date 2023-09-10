@@ -106,7 +106,7 @@ repositionStart filebuffer@Filebuffer{ cursor, lines, start, edits, visualLineCo
   if ( current_line - first_line < div visualLineCount 5 ) then
     filebuffer { start = startOf $ first_line + (current_line - first_line - div visualLineCount 4) }
   else if ( current_line - first_line >= div (4 * visualLineCount) 5 ) then
-    filebuffer { start = startOf $ first_line + (current_line - first_line - div (3 * visualLineCount) 4) }
+    filebuffer { start = startOf $ first_line + (current_line - first_line - div (4 * visualLineCount) 5) }
   else
     filebuffer
   where current_line = Tree.findLineNumber cursor lines

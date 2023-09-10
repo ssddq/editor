@@ -5,7 +5,7 @@
 
     release =
     { flake = false;
-      url   = "https://github.com/ssddq/editor/releases/download/0.0.3/editor_x86-64";
+      url   = "https://github.com/ssddq/editor/releases/download/binary/editor";
     };
 
     vma-lib =
