@@ -503,6 +503,11 @@ moveForwardTests = describe "moveForward" $ do
     moveForward 1 edits (Position 108 8)
       `shouldBe`
     Position 108 9
+  let edits = Leaf {prefix = 0, delete = 143, insert = Nil {color = 1}, length = 0}
+  specify "14" $
+    moveForward 1 edits (Position (-1) 0)
+      `shouldBe`
+    Position 143 0
   where testPatch1 = Branch 0 8 (Branch 0 4 (Branch 0 1 (Leaf 0 0 (Nil 1) 0) (Leaf 1 1 (Tree 1 1 (Tree 0 1 (Nil 1) "?" (Nil 1)) "?" (Tree 0 1 (Nil 1) "?" (Tree 0 0 (Nil 1) "?" (Nil 1)))) 4)) (Branch 4 2 (Leaf 4 2 (Tree 1 1 (Tree 0 1 (Nil 1) "?" (Nil 1)) "?" (Tree 0 1 (Nil 1) "?" (Tree 0 0 (Nil 1) "?" (Nil 1)))) 4) (Leaf 7 1 (Tree 0 1 (Nil 1) "?????" (Nil 1)) 5))) (Branch 8 4 (Branch 8 2 (Leaf 8 3 (Nil 1) 0) (Leaf 11 1 (Tree 0 1 (Tree 0 1 (Nil 1) "" (Nil 1)) "" (Tree 0 0 (Tree 0 1 (Nil 1) "" (Nil 1)) "?" (Tree 0 1 (Nil 1) "?" (Nil 1)))) 2)) (Leaf 12 4 (Nil 1) 0))
 
 moveUpTests

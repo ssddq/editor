@@ -103,8 +103,11 @@ repositionStart
   :: Filebuffer
   -> Filebuffer
 repositionStart filebuffer@Filebuffer{ cursor, lines, start, edits, visualLineCount } =
-  if ( current_line - first_line < div visualLineCount 5 ) then
-    filebuffer { start = startOf $ first_line + (current_line - first_line - div visualLineCount 4) }
+  -- current_line == first_line should only happen at the very start of the file
+  if (current_line == first_line) then
+    filebuffer { start = moveForward 1 edits $ Position (-1) 0 }
+  else if ( current_line - first_line < div visualLineCount 5 ) then
+    filebuffer { start = startOf $ first_line + (current_line - first_line - div visualLineCount 5) }
   else if ( current_line - first_line >= div (4 * visualLineCount) 5 ) then
     filebuffer { start = startOf $ first_line + (current_line - first_line - div (4 * visualLineCount) 5) }
   else

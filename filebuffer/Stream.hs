@@ -338,6 +338,7 @@ streamFile
   -> S.Stream (S.Of Chunk) IO ()
 streamFile handle = streamWithPatches handle noEdits (Position 0 0) (S.Return ())
 
+{-# INLINE streamFromPosition #-}
 streamFromPosition
   :: Handle
   -> Edits
