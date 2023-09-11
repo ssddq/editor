@@ -104,12 +104,13 @@ writeCharacterDraw char constants font pDrawCmds pDrawData state = case (drawSta
          &* set @"firstInstance" |* state.instanceNum
 
 writeCursorDraw
-  :: Font
+  :: Mode
+  -> Font
   -> Ptr VkDrawIndexedIndirectCommand
   -> Ptr DrawData
   -> WriteState
   -> IO (Ptr VkDrawIndexedIndirectCommand, Ptr DrawData, WriteState)
-writeCursorDraw font pDrawCmds pDrawData state = do
+writeCursorDraw mode font pDrawCmds pDrawData state = do
   let drawData = DrawData { xOffset = state.positionX
                           , yOffset = state.positionY - (textHeight / 2)
                           , xx = 1.5
@@ -117,7 +118,7 @@ writeCursorDraw font pDrawCmds pDrawData state = do
                           , yx = 0
                           , yy = 0.5 * lineHeight
                           , fSize = 1.0
-                          , color = Color 243 139 168 255
+                          , color
                           }
   poke pDrawCmds drawCmd
   poke pDrawData drawData
@@ -128,6 +129,9 @@ writeCursorDraw font pDrawCmds pDrawData state = do
            , state'
            )
   where Font {..} = font
+        color = case (mode) of
+          Normal -> Color 249 226 175 255
+          Insert -> Color 243 139 168 255
         drawCmd = createVk @VkDrawIndexedIndirectCommand
           $ set @"indexCount"    |* 12
          &* set @"instanceCount" |* 1
@@ -158,19 +162,20 @@ writeCursorDraw font pDrawCmds pDrawData state = do
 -- | The resulting IntMap can then be consumed to write instanced draw data.
 
 writeIndirectDrawStream
-  :: Constants
+  :: Mode
+  -> Constants
   -> Font
   -> Ptr VkDrawIndexedIndirectCommand
   -> Ptr DrawData
   -> WriteState
   -> S.Stream (S.Of Symbol) IO ()
   -> IO WriteState
-writeIndirectDrawStream constants font = loop
+writeIndirectDrawStream mode constants font = loop
   where loop :: Ptr VkDrawIndexedIndirectCommand -> Ptr DrawData -> WriteState -> S.Stream (S.Of Symbol) IO () -> IO WriteState
         loop _ _ state (S.Return _) = return state
         loop pDrawCmds pDrawData state (S.Effect m) = loop pDrawCmds pDrawData state =<< m
         loop pDrawCmds pDrawData state (S.Step (Caret  S.:> stream)) = do
-          result <- writeCursorDraw font pDrawCmds pDrawData state
+          result <- writeCursorDraw mode font pDrawCmds pDrawData state
           let (,,) pDrawCmds' pDrawData' state' = result
           loop pDrawCmds' pDrawData' state' stream
         loop pDrawCmds pDrawData state (S.Step (Char c S.:> stream)) = do
@@ -195,6 +200,7 @@ writeIndirectDraws bufferI bufferD vk = do
                                 , xMin = 10
                                 }
   state <- writeIndirectDrawStream
+             |- mode
              |- constants
              |- font
              |- ptrI
