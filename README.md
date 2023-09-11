@@ -1,12 +1,12 @@
-At the moment, this is mostly a proof-of-concept, and there are no user-facing features of note. You can:
+At the moment, this is mostly a proof-of-concept, and there are few user-facing features. The application has
 
-* Insert text at the cursor
+* Basic modal editing: `i` to enter insert mode, `Esc` to leave it
 
-* Delete text at the cursor
+* Basic navigation with the arrow keys
 
-* Navigate with the arrow keys
+* Local seeking: with `s` (for forward seek) and `Shift + s` (for backward seek) followed by a 2 character sequence to search for
 
-There are currently no configurable settings: you provide a file as an argument, and it is rendered with white text on a black background.
+There are currently no configurable settings: you can only provide a file as an argument.
 
 If you would like to try it on an x86-64 Linux distribution:
 

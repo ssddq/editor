@@ -113,6 +113,8 @@ data Color = Color
   , alpha :: {-# UNPACK #-} !Word8
   }
 
+data Mode = Normal | Insert
+
 data Fences = Fences
   { inFlight :: {-# UNPACK #-} !VkFence
   }

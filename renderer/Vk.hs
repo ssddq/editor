@@ -69,6 +69,7 @@ generate [d|
           fullscreenBuffer signals
           stream   drawBuffers      vulkan font
      = Vk  { constants        :: Constants
+           , mode             :: Mode
            , vulkan           :: Field vulkan              Vulkan
            , signals          :: Field signals             Signals
            , font             :: Field font                Font
@@ -81,4 +82,4 @@ generate [d|
   |]
 
 emptyVk :: Null Vk
-emptyVk = createEmpty (Vk defaultConstants)
+emptyVk = createEmpty (Vk defaultConstants Normal)

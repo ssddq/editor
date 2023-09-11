@@ -1,13 +1,13 @@
 {-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE NoFieldSelectors      #-}
 {-# LANGUAGE OverloadedRecordDot   #-}
-{-# LANGUAGE NoFieldSelectors #-}
 
 module Filebuffer
-  ( module Filebuffer
+  ( Direction (..)
+  , module Filebuffer
   , module Stream
-  , Direction(..)
   , noEdits
   ) where
 
@@ -112,6 +112,28 @@ repositionStart filebuffer@Filebuffer{ cursor, lines, start, edits, visualLineCo
   where current_line = Tree.findLineNumber cursor lines
         first_line = Tree.findLineNumber start lines
         startOf n = moveForward 1 edits $ Tree.findLinePosition n lines
+
+{-# INLINE scan #-}
+scan
+  :: Int
+  -> Filebuffer
+  -> Strict.ByteString
+  -> S.Stream (S.Of Position) IO ()
+scan n Filebuffer{handle, edits, cursor} string =
+  search string skips (MatchState 0 CNil FNil) $ S.takes n $ streamWithPatches handle edits cursor' $ S.Return ()
+  where skips = calculateSkips string
+        cursor' = moveForward 1 edits cursor
+
+{-# INLINE scanBackwards #-}
+scanBackwards
+  :: Int
+  -> Filebuffer
+  -> Strict.ByteString
+  -> S.Stream (S.Of Position) IO ()
+scanBackwards n Filebuffer{handle, edits, cursor} string =
+  search string skips (MatchState 0 CNil FNil) $ stopStreamAt cursor $ streamWithPatches handle edits cursor' $ S.Return ()
+  where skips = calculateSkips string
+        cursor' = max (Position 0 0) $ moveBackward n edits cursor
 
 {-# INLINE streamFilebuffer #-}
 streamFilebuffer

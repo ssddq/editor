@@ -15,10 +15,10 @@
 
 module Main where
 
-import Font qualified as Font
+import Filebuffer
+import Font       qualified as Font
 import Renderer
 import Shaders
-import Filebuffer
 
 import Data.Text          qualified as T
 import Data.Text.Encoding qualified as T
@@ -31,6 +31,8 @@ import Control.Concurrent
 
 import Data.FileEmbed
 
+import Streaming qualified as S
+import Streaming.Prelude qualified as SP
 
 import System.Environment qualified as Env
 import System.IO
@@ -61,7 +63,7 @@ main = withArgs $ \file -> do
   setNumCapabilities 8
   font <- Font.parse_Font <$> Font.loadTables fontFile
   vk <- initializeVulkan font file
-  SDLRaw.startTextInput
+  SDLRaw.stopTextInput
   mainLoop vk
   return ()
   where fontFile = $(makeRelativeToProject "fonts/FiraCode/FiraCode-Regular.ttf" >>= embedFile)
@@ -69,15 +71,19 @@ main = withArgs $ \file -> do
 mainLoop
   :: Vk    { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
   -> IO Vk { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
-mainLoop vk = do
+mainLoop vk@Vk{mode} = do
   event <- SDL.waitEvent
   case event of
     SDL.Event _ (Key SDL.KeycodeQ Ctrl) -> return vk
-    e -> mainLoop =<< handle e vk
+    e -> mainLoop =<< handle mode e vk
 
 
 
 -- * SDL event handling
+
+{-# INLINE Ctrl #-}
+pattern Ctrl :: SDL.KeyModifier
+pattern Ctrl <- (ctrlDown -> True)
 
 {-# INLINE Key #-}
 pattern Key :: SDL.Keycode -> SDL.KeyModifier -> SDL.EventPayload
@@ -87,33 +93,125 @@ pattern Key keycode modifier <- SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.P
 pattern Shift :: SDL.KeyModifier
 pattern Shift <- (shiftDown -> True)
 
-{-# INLINE Ctrl #-}
-pattern Ctrl :: SDL.KeyModifier
-pattern Ctrl <- (ctrlDown -> True)
+{-# INLINE ctrlDown #-}
+ctrlDown
+  :: SDL.KeyModifier
+  -> Bool
+ctrlDown modifier = modifier.keyModifierLeftCtrl || modifier.keyModifierRightCtrl
+
+{-# INLINE waitForChars #-}
+waitForChars
+  :: Int
+  -> IO (Maybe T.Text)
+waitForChars n = do
+  SDLRaw.startTextInput
+  result <- loop "" n
+  SDLRaw.stopTextInput
+  return result
+  where loop :: T.Text -> Int -> IO (Maybe T.Text)
+        loop text 0 = return (Just text)
+        loop text n = do
+          SDL.Event _ event <- SDL.waitEvent
+          case event of
+            SDL.TextInputEvent (SDL.TextInputEventData _ text') -> loop (T.concat [text, text']) $ n - 1
+            Key SDL.KeycodeEscape _ -> return Nothing
+            _ -> loop text n
+
+{-# INLINE seek #-}
+seek
+  :: Vk    { stream = A Filebuffer }
+  -> IO Vk { stream = A Filebuffer }
+seek vk = do
+  text <- waitForChars 2
+  case (text) of
+    Nothing -> return vk
+    Just chars -> do
+      next <- S.inspect $ scan 4096 filebuffer $ T.encodeUtf8 chars
+      case (next) of
+        Left  _ -> return vk
+        Right (position S.:> _) -> do
+          let filebuffer' = repositionStart $ filebuffer { cursor = position }
+              stream = vk.stream { textBuffer = filebuffer' }
+          return $ vk { stream }
+  where filebuffer = vk.stream.textBuffer
+
+{-# INLINE seekBackwards #-}
+seekBackwards
+  :: Vk    { stream = A Filebuffer }
+  -> IO Vk { stream = A Filebuffer }
+seekBackwards vk = do
+  text <- waitForChars 2
+  case (text) of
+    Nothing -> return vk
+    Just chars -> do
+      next <- SP.last_ $ scanBackwards 4096 filebuffer $ T.encodeUtf8 chars
+      case (next) of
+        Nothing -> return vk
+        Just position -> do
+          let filebuffer' = repositionStart $ filebuffer { cursor = position }
+              stream = vk.stream { textBuffer = filebuffer' }
+          return $ vk { stream }
+  where filebuffer = vk.stream.textBuffer
 
 handle
-  :: SDL.Event
+  :: Mode
+  -> SDL.Event
   -> Vk    { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
   -> IO Vk { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
-handle (SDL.Event _time event) = case (event) of
+handle Normal (SDL.Event _time event) = case (event) of
   -- Window resize events
-  SDL.WindowSizeChangedEvent _                       -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
-  SDL.WindowRestoredEvent    _                       -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
-  -- Print filebuffer state for debugging
-  Key SDL.KeycodeReturn Shift                        -> printFilebuffer
-  -- Navigation
-  Key SDL.KeycodeRight _                             -> drawFrame . move Forward
-  Key SDL.KeycodeLeft  _                             -> drawFrame . move Back
-  Key SDL.KeycodeDown  _                             -> drawFrame . move Down
-  Key SDL.KeycodeUp    _                             -> drawFrame . move Up
+  SDL.WindowSizeChangedEvent _ -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
+  SDL.WindowRestoredEvent    _ -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
+  -- Enter insert mode
+  Key SDL.KeycodeI _           -> setMode Insert >=> drawFrame
+  -- Seek
+  Key SDL.KeycodeS Shift       -> seekBackwards >=> drawFrame
+  Key SDL.KeycodeS _           -> seek >=> drawFrame
   -- Delete text
-  Key SDL.KeycodeDelete    _                         -> drawFrame . updateFilebuffer (delete 1)
-  Key SDL.KeycodeBackspace _                         -> drawFrame . updateFilebuffer (delete 1) . move Back
+  Key SDL.KeycodeDelete    _ -> drawFrame . updateFilebuffer (delete 1)
+  Key SDL.KeycodeBackspace _ -> drawFrame . updateFilebuffer (delete 1) . move Back
+  -- Print filebuffer state for debugging
+  Key SDL.KeycodeReturn Shift -> printFilebuffer
+  -- Navigation
+  Key SDL.KeycodeRight _ -> drawFrame . move Forward
+  Key SDL.KeycodeLeft  _ -> drawFrame . move Back
+  Key SDL.KeycodeDown  _ -> drawFrame . move Down
+  Key SDL.KeycodeUp    _ -> drawFrame . move Up
+  -- Otherwise
+  _ -> return
+handle Insert (SDL.Event _time event) = case (event) of
+  -- Window resize events
+  SDL.WindowSizeChangedEvent _ -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
+  SDL.WindowRestoredEvent    _ -> recreateSwapchain . updateFilebuffer id >=> recreateFramebuffers >=> drawFrame
+  -- Exit insert mode
+  Key SDL.KeycodeEscape _ -> setMode Normal >=> drawFrame
+  -- Print filebuffer state for debugging
+  Key SDL.KeycodeReturn Shift -> printFilebuffer
+  -- Navigation
+  Key SDL.KeycodeRight _ -> drawFrame . move Forward
+  Key SDL.KeycodeLeft  _ -> drawFrame . move Back
+  Key SDL.KeycodeDown  _ -> drawFrame . move Down
+  Key SDL.KeycodeUp    _ -> drawFrame . move Up
+  -- Delete text
+  Key SDL.KeycodeDelete    _ -> drawFrame . updateFilebuffer (delete 1)
+  Key SDL.KeycodeBackspace _ -> drawFrame . updateFilebuffer (delete 1) . move Back
   -- Insert text
   Key SDL.KeycodeReturn _                            -> drawFrame . insertText "\n"
   SDL.TextInputEvent (SDL.TextInputEventData _ text) -> drawFrame . insertText text
   -- Otherwise
-  _                                                  -> return
+  _ -> return
+
+{-# INLINE setMode #-}
+setMode
+  :: Mode
+  -> Vk    { stream = A Filebuffer }
+  -> IO Vk { stream = A Filebuffer }
+setMode Insert vk = do
+  SDLRaw.startTextInput
+  return $ vk { mode = Insert }
+setMode Normal vk = do
+  SDLRaw.stopTextInput
+  return $ vk { mode = Normal }
 
 {-# INLINE shiftDown #-}
 shiftDown
@@ -121,11 +219,6 @@ shiftDown
   -> Bool
 shiftDown modifier = modifier.keyModifierLeftShift || modifier.keyModifierRightShift
 
-{-# INLINE ctrlDown #-}
-ctrlDown
-  :: SDL.KeyModifier
-  -> Bool
-ctrlDown modifier = modifier.keyModifierLeftCtrl || modifier.keyModifierRightCtrl
 
 
 -- * Filebuffer manipulation
@@ -157,7 +250,6 @@ loadFile path vk = do
   return $ vk { stream }
   where updateVisualLineCount :: Int -> Filebuffer -> Filebuffer
         updateVisualLineCount n filebuffer = filebuffer { visualLineCount = n }
-
 
 move
   :: Direction

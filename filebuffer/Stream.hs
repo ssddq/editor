@@ -36,6 +36,12 @@ import Streaming          qualified as S
 import Streaming.Internal qualified as S
 
 
+-- | The first argument is the position relative to the base file.
+-- | The second argument is a flag indicating whether the chunk is a base file chunk (0)
+-- | or an inserted chunk (1).
+-- | Note, a base file chunk need not have a starting position with offset = 0
+-- | if the chunk immediately succeeds an insert chunk.
+
 data Chunk = Chunk {-# UNPACK #-} !Position
                    {-# UNPACK #-} !Word8
                    {-# UNPACK #-} !Strict.ByteString
@@ -243,14 +249,6 @@ matchForwards
   -> MatchState
 matchForwards !start !flag !target !state !string = Strict.foldl' (matchChar start flag target) state string
 
-{-# INLINE scan #-}
-scan
-  :: Handle
-  -> Strict.ByteString
-  -> S.Stream (S.Of Position) IO ()
-scan handle string = search string skips (MatchState 0 CNil FNil) $ streamFile handle
-  where skips = calculateSkips string
-
 {-# INLINE scanLines #-}
 scanLines
   :: FilePath
@@ -400,6 +398,30 @@ streamInsertChunks !base !offset (Tree leftOffset _ left chunk@(Strict.BS _ len)
     $ S.Step (Chunk (Position base offset') 1 chunk S.:> streamInsertChunks base (offset' + len) right stream)
   where offset' = offset + leftOffset
 
+{-# INLINE stopStreamAt #-}
+stopStreamAt
+  :: (Monad m)
+  => Position
+  -> S.Stream (S.Of Chunk) m r
+  -> S.Stream (S.Of Chunk) m ()
+stopStreamAt position@Position{base, offset} stream = case (stream) of
+  S.Effect m -> S.Effect (fmap (stopStreamAt position) m)
+  S.Return _ -> S.Return ()
+  S.Step (Chunk position'@Position{base = base', offset = offset'} 0 string S.:> rest) ->
+    if (Strict.null string' || (base' == base && offset' > offset)) then
+      S.Return ()
+    else
+      S.Step (Chunk position' 0 string' S.:> stopStreamAt position rest)
+    where string' = Strict.take (base - base') string
+  S.Step (chunk@(Chunk position'@Position{base = base', offset = offset'} _ string) S.:> rest) ->
+    if (base' > base || (base' == base && offset' > offset)) then
+      S.Return ()
+    else if (base' < base) then
+      S.Step (chunk S.:> stopStreamAt position rest)
+    else
+      S.Step (Chunk position' 1 string' S.:> stopStreamAt position rest)
+    where string' = Strict.take (offset - offset') string
+
 {-# INLINE streamWithPatches #-}
 streamWithPatches
   :: Handle
@@ -408,6 +430,7 @@ streamWithPatches
   -> S.Stream (S.Of Chunk) IO ()
   -> S.Stream (S.Of Chunk) IO ()
 streamWithPatches handle edits start stream = streamFromPosition handle edits start (\s -> streamChunks handle s stream)
+
 
 streamWithPatches'
   :: Handle
