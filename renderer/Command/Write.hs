@@ -172,7 +172,11 @@ writeIndirectDrawStream
   -> IO WriteState
 writeIndirectDrawStream mode constants font = loop
   where loop :: Ptr VkDrawIndexedIndirectCommand -> Ptr DrawData -> WriteState -> S.Stream (S.Of Symbol) IO () -> IO WriteState
-        loop _ _ state (S.Return _) = return state
+        -- We're dividing by lineHeight, but this should be safe.
+        -- If a font declares lineHeight = 0 then many (many!) things would've failed already
+        loop _ _ state (S.Return _) = return $ state'
+          where lines' = state.lines + max 0 (floor $ (state.yMax - state.positionY) / font.lineHeight)
+                state' = state { lines = lines' }
         loop pDrawCmds pDrawData state (S.Effect m) = loop pDrawCmds pDrawData state =<< m
         loop pDrawCmds pDrawData state (S.Step (Caret  S.:> stream)) = do
           result <- writeCursorDraw mode font pDrawCmds pDrawData state
