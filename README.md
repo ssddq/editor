@@ -6,7 +6,7 @@ At the moment, this is mostly a proof-of-concept, and there are few user-facing 
 
 * Local seeking: with `s` (forward) and `Shift + s` (backward) followed by a 2 character sequence to search for
 
-* Syntax highlighting: currently, there is a `flatparse`-based syntax highlighting for Haskell source code. However, there is no filetype detection as yet, so the parser will be applied to any file you open.
+* Syntax highlighting: currently, there is a `flatparse`-based syntax highlighter for Haskell source code. However, there is no filetype detection as yet, so the parser will be applied to any file you open.
 
 There are currently no configurable settings: you can only provide a file as an argument.
 
