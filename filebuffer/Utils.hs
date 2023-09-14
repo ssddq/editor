@@ -23,6 +23,20 @@ import Data.IntMap.Strict       qualified as Map
 
 import Data.Vector.Async qualified as Async
 
+
+{-# INLINE diff #-}
+diff
+  :: Strict.ByteString
+  -> Strict.ByteString
+  -> Strict.ByteString
+diff !full !tail = Strict.take (Strict.length full - Strict.length tail) full
+
+data ByteStringColored = ByteStringColored
+  { string :: {-# UNPACK #-} !Strict.ByteString
+  , color  :: {-# UNPACK #-} !Color
+  }
+
+
 data CompletedMatches
   = Match {-# UNPACK #-} !Position
           {-# UNPACK #-} !Word8

@@ -19,6 +19,7 @@ import Filebuffer
 import Font       qualified as Font
 import Renderer
 import Shaders
+import Haskell
 
 import Data.Text          qualified as T
 import Data.Text.Encoding qualified as T
@@ -36,6 +37,7 @@ import Streaming.Prelude qualified as SP
 
 import System.Environment qualified as Env
 import System.IO
+
 
 -- * main
 
@@ -72,6 +74,7 @@ mainLoop
   :: Vk    { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
   -> IO Vk { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
 mainLoop vk@Vk{mode} = do
+  drawFrame vk
   event <- SDL.waitEvent
   case event of
     SDL.Event _ (Key SDL.KeycodeQ Ctrl) -> return vk
@@ -246,7 +249,7 @@ loadFile path vk = do
                      , lines
                      , visualLineCount = maxBound
                      }
-      stream = StreamBuffer filebuffer streamFilebuffer updateVisualLineCount
+      stream = StreamBuffer filebuffer (streamFilebuffer hsParser) updateVisualLineCount
   return $ vk { stream }
   where updateVisualLineCount :: Int -> Filebuffer -> Filebuffer
         updateVisualLineCount n filebuffer = filebuffer { visualLineCount = n }

@@ -59,6 +59,9 @@
           inherit parser;
         };
 
+      syntax = cabal2nix "syntax" ./syntax
+        { inherit common; };
+
       parse-font = cabal2nix "parse-font" ./parse-font
         { inherit common; };
 
@@ -126,6 +129,7 @@
       inherit filebuffer;
       inherit common;
       inherit renderer;
+      inherit syntax;
     };
 
     editor-shell = pkgs.mkShell
@@ -155,7 +159,20 @@
 
 
       inputsFrom =
-      [ self.editor.env ];
+      [
+        ( pkgs.lib.attrsets.filterAttrs
+          ( n: v:
+               n != "preprocessor"
+            && n != "parser"
+            && n != "formatter"
+            && n != "parse-font"
+            && n != "shaders"
+            && n != "filebuffer"
+            && n != "renderer"
+          ) self.editor.env
+        )
+      ];
+
 
     };
 

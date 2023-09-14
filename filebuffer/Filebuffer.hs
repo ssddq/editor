@@ -17,16 +17,16 @@ import Utils
 
 import Data.Edits
 import Data.Lines
-import Data.Tree
+import Data.Tree  hiding (Color)
 
 import System.IO
 
-import Data.ByteString          qualified as Strict
-import Data.ByteString.Internal qualified as Strict
-import Data.Tree                qualified as Tree
+import Data.ByteString qualified as Strict
+import Data.Tree       qualified as Tree
 
 import Streaming          qualified as S
 import Streaming.Internal qualified as S
+import Streaming.Prelude  qualified as SP
 
 -- | Storing the linebuffer as an Async allows us to defer
 -- | the `wait` on the result to use-time, which is useful
@@ -138,29 +138,34 @@ scanBackwards n Filebuffer{handle, edits, cursor} string =
   where skips = calculateSkips string
         cursor' = max (Position 0 0) $ moveBackward n edits cursor
 
+-- | This is not actually correct,
+-- | since injectAfter measures distance in code points
+-- | while the cursor_distance is measured in raw bytes.
+-- | Similarly, dropChars measures characters in code points
+-- | rather than according to their encoded byte size.
+-- |
+-- | This should be an easy fix.
+
 {-# INLINE streamFilebuffer #-}
 streamFilebuffer
-  :: Filebuffer
+  :: FileParser a e
+  -> Filebuffer
   -> S.Stream (S.Of Symbol) IO ()
-streamFilebuffer filebuffer = do
-  loop (Byte0 0) $ streamWithPatches handle edits filebuffer.start (S.Return ())
-  where Position pos off = filebuffer.cursor
-        handle  = filebuffer.handle
-        edits = filebuffer.edits
-        loop :: DecodeState -> S.Stream (S.Of Chunk) IO () -> S.Stream (S.Of Symbol) IO ()
+streamFilebuffer FileParser{parser, defaultColor, defaultState, cursor, requestedContext} filebuffer@Filebuffer{handle, edits, start} = do
+  injectAfter (Cursor cursor) cursor_distance
+  $ dropChars drop_count defaultColor
+  $ loop (Byte0 0)
+  $ flatparseStream parser defaultColor defaultState
+  $ SP.map chunkToByteString
+  $ streamWithPatches handle edits stream_start
+  $ S.Return ()
+  where cursor_distance = calculateDistance edits filebuffer.start filebuffer.cursor
+        drop_count = calculateDistance edits stream_start start
+        stream_start = max (Position 0 0) $ moveBackward (max 512 requestedContext) edits start
+        chunkToByteString :: Chunk -> Strict.ByteString
+        chunkToByteString (Chunk _ _ bs) = bs
+        loop :: DecodeState -> S.Stream (S.Of ByteStringColored) IO () -> S.Stream (S.Of Symbol) IO ()
         loop state stream = case (stream) of
           S.Return _ -> S.Return ()
           S.Effect m -> S.Effect (fmap (loop state) m)
-          S.Step (chunk S.:> bs) -> case (flag) of
-            -- This is not actually correct, because the cursor position is in bytes,
-            -- while the stream position is in code points.
-            -- The cursor really needs to be injected before decoding the stream, not after.
-            0 | (off0 == 0 || pos /= pos0) && off == 0 && pos >= pos0 && pos <= pos0 + len ->
-                  injectAfter Caret (pos - pos0) $ decodeByteString string (\x -> Char x) (\s -> loop s bs) state
-              | otherwise ->
-                  decodeByteString string (\x -> Char x) (\s -> loop s bs) state
-            _ | pos == pos0 && off >= off0 && off <= off0 + len ->
-                  injectAfter Caret (off - off0) $ decodeByteString string (\x -> Char x) (\s -> loop s bs) state
-              | otherwise ->
-                  decodeByteString string (\x -> Char x) (\s -> loop s bs) state
-            where Chunk (Position pos0 off0) flag string@(Strict.BS _ len) = chunk
+          S.Step (ByteStringColored string color S.:> bs) -> S.Step (ColorChange color S.:> decodeByteString string (\x -> Char x) (\s -> loop s bs) state)

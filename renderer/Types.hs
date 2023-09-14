@@ -106,15 +106,6 @@ data DrawData = DrawData
   , color   :: {-# UNPACK #-} !Color
   }
 
-data Color = Color
-  { red   :: {-# UNPACK #-} !Word8
-  , green :: {-# UNPACK #-} !Word8
-  , blue  :: {-# UNPACK #-} !Word8
-  , alpha :: {-# UNPACK #-} !Word8
-  }
-
-data Mode = Normal | Insert
-
 data Fences = Fences
   { inFlight :: {-# UNPACK #-} !VkFence
   }
@@ -326,27 +317,6 @@ instance Storable DrawData where
     pokeByteOff (castPtr ptr) 20 drawData.yy
     pokeByteOff (castPtr ptr) 24 drawData.fSize
     pokeByteOff (castPtr ptr) 28 drawData.color
-
-instance Storable Color where
-  sizeOf    _ = 4
-  alignment _ = 4
-  peek ptr = do
-    red   <- peek $ castPtr ptr
-    green <- peekByteOff (castPtr ptr) 1
-    blue  <- peekByteOff (castPtr ptr) 2
-    alpha <- peekByteOff (castPtr ptr) 3
-    return $ Color
-      { red
-      , green
-      , blue
-      , alpha
-      }
-  poke ptr color = do
-    poke        (castPtr ptr)   color.red
-    pokeByteOff (castPtr ptr) 1 color.green
-    pokeByteOff (castPtr ptr) 2 color.blue
-    pokeByteOff (castPtr ptr) 3 color.alpha
-
 
 instance Storable Area where
   sizeOf    _ = 8

@@ -22,7 +22,9 @@ import Data.Word
 
 import Data.Edits
 import Data.Lines
-import Data.Tree
+import Data.Tree  hiding (Color)
+
+import FlatParse.Basic
 
 import Data.Tree         qualified as Tree
 import Data.Vector.Async qualified as Async
@@ -108,18 +110,39 @@ decodeStream _ = loop
           S.Step (Chunk _ _ string S.:> bs) ->
             decodeByteString string (\x -> x) (\s -> decodeStream s bs) (Byte0 0)
 
+{-# INLINE dropChars #-}
+dropChars
+  :: Int                          -- count to drop
+  -> Color                        -- default color to use
+  -> S.Stream (S.Of Symbol) IO ()
+  -> S.Stream (S.Of Symbol) IO ()
+dropChars = loop
+  where loop !0 !color stream = S.Step (ColorChange color S.:> stream)
+        loop !n !color stream = case stream of
+          S.Return ()          -> S.Return ()
+          S.Effect m           -> S.Effect (fmap (loop n color) m)
+          S.Step (b S.:> rest) -> case b of
+            Char{}   -> loop (n - 1) color rest
+            Cursor{} -> loop n color rest
+            ColorChange color' -> loop n color' rest
+
 {-# INLINE injectAfter #-}
 injectAfter
-  :: a                       -- element to inject
-  -> Int                     -- offset into stream
-  -> S.Stream (S.Of a) IO ()
-  -> S.Stream (S.Of a) IO ()
+  :: Symbol                       -- element to inject
+  -> Int                          -- offset into stream
+  -> S.Stream (S.Of Symbol) IO ()
+  -> S.Stream (S.Of Symbol) IO ()
 injectAfter a = loop
-  where loop 0 stream = S.Step (a S.:> stream)
-        loop n stream = case stream of
-          S.Return _           -> S.Return ()
+  where loop !0 stream = S.Step (a S.:> stream)
+        loop !n stream = case stream of
+          -- If we reach the end of the stream,
+          -- just place the cursor anyway.
+          S.Return _           -> S.Step (a S.:> S.Return ())
           S.Effect m           -> S.Effect (fmap (loop n) m)
-          S.Step (b S.:> rest) -> S.Step (b S.:> loop (n-1) rest)
+          S.Step (b S.:> rest) -> case b of
+            c@Char{}        -> S.Step (c S.:> loop (n-1) rest)
+            c@Cursor{}      -> S.Step (c S.:> loop n rest)
+            c@ColorChange{} -> S.Step (c S.:> loop n rest)
 
 -- | This function will try to match the last character of the given string
 -- | to the current position in the bytestring chunk so far,
@@ -318,6 +341,30 @@ searchCharChunk !start !flag !char !string@(Strict.BS _ length) = loop 0
                   -- I'd prefer to know if a chunk somehow ended up with an invalid flag.
                   _ -> error "invalid chunk flag encountered in searchCharChunk"
 
+{-# INLINE stopStreamAt #-}
+stopStreamAt
+  :: (Monad m)
+  => Position
+  -> S.Stream (S.Of Chunk) m r
+  -> S.Stream (S.Of Chunk) m ()
+stopStreamAt position@Position{base, offset} stream = case (stream) of
+  S.Effect m -> S.Effect (fmap (stopStreamAt position) m)
+  S.Return _ -> S.Return ()
+  S.Step (Chunk position'@Position{base = base', offset = offset'} 0 string S.:> rest) ->
+    if (Strict.null string' || (base' == base && offset' > offset)) then
+      S.Return ()
+    else
+      S.Step (Chunk position' 0 string' S.:> stopStreamAt position rest)
+    where string' = Strict.take (base - base') string
+  S.Step (chunk@(Chunk position'@Position{base = base', offset = offset'} _ string) S.:> rest) ->
+    if (base' > base || (base' == base && offset' > offset)) then
+      S.Return ()
+    else if (base' < base) then
+      S.Step (chunk S.:> stopStreamAt position rest)
+    else
+      S.Step (Chunk position' 1 string' S.:> stopStreamAt position rest)
+    where string' = Strict.take (offset - offset') string
+
 {-# INLINE streamChunks #-}
 streamChunks
   :: Handle
@@ -399,30 +446,6 @@ streamInsertChunks !base !offset (Tree leftOffset _ left chunk@(Strict.BS _ len)
     $ S.Step (Chunk (Position base offset') 1 chunk S.:> streamInsertChunks base (offset' + len) right stream)
   where offset' = offset + leftOffset
 
-{-# INLINE stopStreamAt #-}
-stopStreamAt
-  :: (Monad m)
-  => Position
-  -> S.Stream (S.Of Chunk) m r
-  -> S.Stream (S.Of Chunk) m ()
-stopStreamAt position@Position{base, offset} stream = case (stream) of
-  S.Effect m -> S.Effect (fmap (stopStreamAt position) m)
-  S.Return _ -> S.Return ()
-  S.Step (Chunk position'@Position{base = base', offset = offset'} 0 string S.:> rest) ->
-    if (Strict.null string' || (base' == base && offset' > offset)) then
-      S.Return ()
-    else
-      S.Step (Chunk position' 0 string' S.:> stopStreamAt position rest)
-    where string' = Strict.take (base - base') string
-  S.Step (chunk@(Chunk position'@Position{base = base', offset = offset'} _ string) S.:> rest) ->
-    if (base' > base || (base' == base && offset' > offset)) then
-      S.Return ()
-    else if (base' < base) then
-      S.Step (chunk S.:> stopStreamAt position rest)
-    else
-      S.Step (Chunk position' 1 string' S.:> stopStreamAt position rest)
-    where string' = Strict.take (offset - offset') string
-
 {-# INLINE streamWithPatches #-}
 streamWithPatches
   :: Handle
@@ -431,7 +454,6 @@ streamWithPatches
   -> S.Stream (S.Of Chunk) IO ()
   -> S.Stream (S.Of Chunk) IO ()
 streamWithPatches handle edits start stream = streamFromPosition handle edits start (\s -> streamChunks handle s stream)
-
 
 streamWithPatches'
   :: Handle
@@ -465,12 +487,31 @@ streamWithPatches' handle (Leaf key deleteCount insertSequence _) state@(StreamS
     -- | we are assuming that the position position is 'valid', i.e. not in a delete range.
     GT -> stream $ state
 
-{-# INLINE toSymbols #-}
-toSymbols
-  :: S.Stream (S.Of Word32) IO ()
-  -> S.Stream (S.Of Symbol) IO ()
-toSymbols = loop
-  where loop stream = case stream of
-          S.Return _        -> S.Return ()
-          S.Effect m        -> S.Effect (fmap loop m)
-          S.Step (c S.:> s) -> S.Step (Char c S.:> loop s)
+
+
+-- * Syntax highlighting
+
+{-# INLINE flatparseStream #-}
+flatparseStream
+  :: forall a e
+   . (a -> Parser e (Color, a))
+  -> Color
+  -> a
+  -> S.Stream (S.Of Strict.ByteString) IO ()
+  -> S.Stream (S.Of ByteStringColored) IO ()
+flatparseStream parser defaultColor = loop ""
+  where
+    loop :: Strict.ByteString -> a -> S.Stream (S.Of Strict.ByteString) IO () -> S.Stream (S.Of ByteStringColored) IO ()
+    loop !string !state stream = case (stream) of
+      S.Return r -> parseUntilFailure string state $ \remaining _ -> S.Step (ByteStringColored remaining defaultColor S.:> S.Return r)
+      S.Effect m -> S.Effect (fmap (loop string state) m)
+      S.Step (bs S.:> rest)
+        | Strict.length string < 512 -> loop (string <> bs) state rest
+        | otherwise -> parseUntilFailure string state $ \remaining state' -> loop (remaining <> bs) state' rest
+    parseUntilFailure :: Strict.ByteString -> a
+                      -> (Strict.ByteString -> a -> S.Stream (S.Of ByteStringColored) IO ())
+                      -> S.Stream (S.Of ByteStringColored) IO ()
+    parseUntilFailure !string !state cont = case (runParser (parser state) string) of
+      OK (color, state') unparsed -> S.Step (ByteStringColored (diff string unparsed) color S.:> parseUntilFailure unparsed state' cont)
+      Fail  -> cont string state
+      Err _ -> cont string state

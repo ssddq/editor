@@ -4,7 +4,9 @@ At the moment, this is mostly a proof-of-concept, and there are few user-facing 
 
 * Basic navigation with the arrow keys
 
-* Local seeking: with `s` (for forward seek) and `Shift + s` (for backward seek) followed by a 2 character sequence to search for
+* Local seeking: with `s` (forward) and `Shift + s` (backward) followed by a 2 character sequence to search for
+
+* Syntax highlighting: currently, there is a `flatparse`-based syntax highlighting for Haskell source code. However, there is no filetype detection as yet, so the parser will be applied to any file you open.
 
 There are currently no configurable settings: you can only provide a file as an argument.
 
@@ -37,13 +39,15 @@ The technical points that may be of interest:
 
 * Every frame, the relevant portion of the file is read from the disk and merged with the editor state into (essentially) a `Stream (Of Char) IO ()`. The stream is terminated as soon as the renderer has consumed enough characters to fill the given render area.
 
+* Syntax highlighting is provided by streaming the results of a stateful `flatparse` parser `state -> Parser e (Color, State)`. The parser is fed chunks of bytestrings with some minimal length (currently 512), and the results are streamed as they are produced.
+
+  Parsers manage their own internal state (which may be trivial), and can request a limited amount of context (currently 512 bytes) so that they can begin parsing earlier than the start of the render area.
+
 * The file is scanned for newline characters eagerly and asynchronously on startup. Operations that depend on the array of newline positions (e.g. line traversal, inserting a newline character) only block until enough of the array has been generated that they can proceed. This means that *there is no perceptible difference in opening and editing a 1 KB file and opening and editing a 1 GB file*, unless you (immediately) jump to the last line in a large file.
 
   You can generate a 1 GB text file with:
 
       base64 /dev/urandom | head -c 1000000000 > sample.txt
-
-While it's hard to reason precisely about the memory usage, my rough (conservative) overestimate is that a single edit -- inserting/deleting text -- will have at most ~1.3 KB of overhead (and probably a lot less on average, but don't quote me on any of this!). The untouched portions of each tree are recycled between edits, so memory usage should grow quite slowly even once edit history is tracked.
 
 Currently only UTF-8 encoded text files are supported; attempting to open a binary file will likely terminate the program immediately.
 
@@ -57,13 +61,19 @@ If you like to live dangerously, you can recompile it and enable saving with lit
 
 ## Performance
 
+Since this is in active development and many things (e.g. the exact content of the file being opened) can have dramatic impacts on performance, you should avoid taking the numbers below as anything more than *general* indications.
+
 On a desktop computer with an AMD 7900X and RX 6750 XT:
 
 * Given a 1 GB file with 70-80 characters per line, scanning for newlines takes <2 seconds on my device to produce an array just over ~100MB. On a 100 MB file, it completes in < 0.4s. These seemed measurably slower than e.g. helix in a terminal. However, on extremely large files (1 GB) both memory usage and the initial start up time (i.e. perceived latency) are considerably lower.
 
-* Frame times are well under 1 ms (~0.7 ms). On an 11th generation framework laptop, frame times were comfortably under 7 ms.
+* Frame times depend on the file, but hover somewhere around 1 ms on my desktop. On my far less capable Framework laptop, frame times were around 7 ms. These should be mostly impercetible.
 
-  Note: these are a little tricky to measure since new frames are currently only rendered in response to SDL events (see: `main/Main.hs`), and the function used to poll the OS queue for keyboard events seems to only refresh every ~40 ms.
+* Syntax highlighting incurs a variable performance penalty, but it can be as low as 10% (i.e. frame times only increase by 10%). This seems to be largely due to `flatparse` generating *extremely* efficient parsers! Requesting the maximum context currently allowed (512 bytes) on the current Haskell parser brought the penalty up to only 20%.
+
+  Note that parsers that attempt to color each letter individually tend to have dramatically worse performance, though it's still likely to be imperceptible. Parsers that can color whole words at a time have a much, much smaller performance impact.
+
+Note: frame rates are hard-limited by the poll rate of `SDL.waitEvent`, which is roughly ~40 ms on my device. Frames are only ever rendered in response to SDL events (see: `main/Main.hs`), and you should expect your device to be idle for the most part.
 
 ## Project layout
 
@@ -78,6 +88,8 @@ The renderer spans a few packages
 * `shaders` generates SPIR-V bytecode for the shaders used by the renderer, and exports these as Haskell bytestrings.
 
 * `parse-font` contains a (not yet complete) parser for .ttf font files.
+
+* `syntax` contains a stateful `flatparse` syntax highlighter for Haskell.
 
 * `renderer` sets up the Vulkan render pipeline, and generates indirect draw calls from (essentially) a `Stream (Of Char) IO ()`.
 

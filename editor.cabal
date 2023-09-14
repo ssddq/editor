@@ -23,25 +23,26 @@ executable editor
       -O2 -threaded
   build-depends:
       base
-    , common
-    , ghc
-    , renderer
     , bytestring
+    , common
+    , filebuffer
     , file-embed
-    , parse-font
+    , ghc
     , ghc-prim
+    , mmap
+    , parse-font
     , preprocessor
     , primitive
+    , renderer
     , sdl2
     , shaders
     , storable-tuple
+    , streaming
+    , syntax
     , text
     , time
     , timeit
     , vector
     , vma
     , vulkan-api
-    , mmap
-    , streaming
-    , filebuffer
   default-language: Haskell2010

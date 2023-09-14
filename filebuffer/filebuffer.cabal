@@ -16,6 +16,7 @@ library
       Data.Tree.Common
       Data.Tree.ByteString
       Data.Tree
+      Highlighter
       Stream
       Utils
       Unsafe.ByteString
@@ -25,10 +26,13 @@ library
       ImportQualifiedPost
   build-depends:
       async
+    , attoparsec
+    , array
     , base
     , bytestring
     , common
     , containers
+    , flatparse
     , ghc
     , ghc-prim
     , streaming
@@ -50,6 +54,7 @@ test-suite test
       Data.Lines
       Stream
       Filebuffer
+      Highlighter
       Utils
       Unsafe.ByteString
   hs-source-dirs:
@@ -62,6 +67,7 @@ test-suite test
       hspec
     , hspec-expectations
     , async
+    , attoparsec
     , base
     , bytestring
     , common

@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -F -pgmF=tpr-pp #-}
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Command.Write where
 
@@ -23,8 +24,8 @@ data WriteState = WriteState
   , yMax        :: {-# UNPACK #-} !Float
   , xMin        :: {-# UNPACK #-} !Float
   , lines       :: {-# UNPACK #-} !Int
+  , color       :: {-# UNPACK #-} !Color
   }
-  deriving (Show)
 
 
 drawState
@@ -47,6 +48,7 @@ initialState = WriteState
   , xMax = 0
   , yMax = 0
   , lines = 0
+  , color = Color 255 255 255 255
   }
 
 writeCharacterDraw
@@ -95,7 +97,7 @@ writeCharacterDraw char constants font pDrawCmds pDrawData state = case (drawSta
         Constants {..} = constants
         (,,,) firstIndex indexCount advance _ = lookup $ fromIntegral $ fromEnum char
         width = scale * fromIntegral advance
-        mkDrawData x y = DrawData x y scale 0 0 scale fSize $ Color 239 241 245 255
+        mkDrawData x y = DrawData x y scale 0 0 scale fSize state.color
         drawCmd = createVk @VkDrawIndexedIndirectCommand
           $ set @"indexCount"    |* fromIntegral indexCount
          &* set @"instanceCount" |* 1
@@ -103,14 +105,27 @@ writeCharacterDraw char constants font pDrawCmds pDrawData state = case (drawSta
          &* set @"vertexOffset"  |* 0
          &* set @"firstInstance" |* state.instanceNum
 
+
+-- | The cursor can have clipping issues with the surrounding text since it's drawn only once,
+-- | and the basepoint from which the winding number is calculated
+-- | is not the same basepoint that the adjacent glyphs use.
+-- |
+-- | To fix this, we could opt to simply draw the cursor twice:
+-- | this is not really correct but is extremely easy,
+-- | since we can just write the draw command into the buffer twice here.
+-- |
+-- | I am not doing this at this point, since it's not a significant issue and
+-- | we'll likely refactor later to draw UI elements into a separate color attachment
+-- | that is overlaid at the end.
+
 writeCursorDraw
-  :: Mode
+  :: Color
   -> Font
   -> Ptr VkDrawIndexedIndirectCommand
   -> Ptr DrawData
   -> WriteState
   -> IO (Ptr VkDrawIndexedIndirectCommand, Ptr DrawData, WriteState)
-writeCursorDraw mode font pDrawCmds pDrawData state = do
+writeCursorDraw color font pDrawCmds pDrawData state = do
   let drawData = DrawData { xOffset = state.positionX
                           , yOffset = state.positionY - (textHeight / 2)
                           , xx = 1.5
@@ -129,9 +144,6 @@ writeCursorDraw mode font pDrawCmds pDrawData state = do
            , state'
            )
   where Font {..} = font
-        color = case (mode) of
-          Normal -> Color 249 226 175 255
-          Insert -> Color 243 139 168 255
         drawCmd = createVk @VkDrawIndexedIndirectCommand
           $ set @"indexCount"    |* 12
          &* set @"instanceCount" |* 1
@@ -139,18 +151,6 @@ writeCursorDraw mode font pDrawCmds pDrawData state = do
          &* set @"vertexOffset"  |* 0
          &* set @"firstInstance" |* state.instanceNum
 
--- | The cursor can have clipping issues with the surrounding text since it's drawn only once,
--- | and the basepoint from which the winding number is calculated
--- | is not the same basepoint that the adjacent glyphs use.
--- |
--- | To fix this, we could opt to simply draw the cursor twice:
--- | this is not really correct but is extremely easy,
--- | since we can just write the draw command into the buffer twice here.
--- |
--- | I am not doing this at this point, since it's not a significant issue and
--- | we'll likely refactor later to draw UI elements into a separate color attachment
--- | that is overlaid at the end.
--- |
 -- | Note this function is unsafe at the moment, since there is no check to prevent
 -- | writing past the memory allocated by the pointer. The initial allocation is large
 -- | enough that this shouldn't matter, but this should be made safe eventually.
@@ -178,10 +178,11 @@ writeIndirectDrawStream mode constants font = loop
           where lines' = state.lines + max 0 (floor $ (state.yMax - state.positionY) / font.lineHeight)
                 state' = state { lines = lines' }
         loop pDrawCmds pDrawData state (S.Effect m) = loop pDrawCmds pDrawData state =<< m
-        loop pDrawCmds pDrawData state (S.Step (Caret  S.:> stream)) = do
-          result <- writeCursorDraw mode font pDrawCmds pDrawData state
+        loop pDrawCmds pDrawData state (S.Step (Cursor cursor S.:> stream)) = do
+          result <- writeCursorDraw (cursor mode) font pDrawCmds pDrawData state
           let (,,) pDrawCmds' pDrawData' state' = result
           loop pDrawCmds' pDrawData' state' stream
+        loop pDrawCmds pDrawData state (S.Step (ColorChange color S.:> stream)) = loop pDrawCmds pDrawData (state { color = color }) stream
         loop pDrawCmds pDrawData state (S.Step (Char c S.:> stream)) = do
           let char = toEnum $ fromIntegral c
           result <- writeCharacterDraw char constants font pDrawCmds pDrawData state

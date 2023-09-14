@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE NamedFieldPuns       #-}
 {-# LANGUAGE NoFieldSelectors     #-}
+{-# LANGUAGE OverloadedRecordDot  #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeApplications     #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -9,11 +10,28 @@
 module Common.Types where
 
 import Data.Int
-import Data.Vector qualified as V
 import Data.Word
+import FlatParse.Basic
+
+import Data.Vector qualified as V
 
 import Foreign.Ptr
 import Foreign.Storable
+
+data Color = Color
+  { red   :: {-# UNPACK #-} !Word8
+  , green :: {-# UNPACK #-} !Word8
+  , blue  :: {-# UNPACK #-} !Word8
+  , alpha :: {-# UNPACK #-} !Word8
+  }
+
+data FileParser a e = FileParser
+  { parser           :: a -> Parser e (Color, a)
+  , defaultColor     :: {-# UNPACK #-} !Color
+  , defaultState     :: a
+  , cursor           :: Mode -> Color
+  , requestedContext :: {-# UNPACK #-} !Int
+  }
 
 -- | Font data that we want to avoid recalculating per-frame or per-glyph.
 
@@ -45,6 +63,10 @@ data IndexRange = IndexRange
   }
   deriving (Read, Show)
 
+data Mode
+  = Normal
+  | Insert
+
 data Position = Position
   { base   :: {-# UNPACK #-} !Int
   , offset :: {-# UNPACK #-} !Int
@@ -52,8 +74,9 @@ data Position = Position
   deriving (Eq, Show)
 
 data Symbol
-  = Char  {-# UNPACK #-} !Word32
-  | Caret
+  = Char        {-# UNPACK #-} !Word32
+  | ColorChange {-# UNPACK #-} !Color
+  | Cursor      (Mode -> Color)
 
 -- | Standardized data for the affine transformation
 -- | required to draw a glyph component of a composite glyph.
@@ -89,6 +112,26 @@ class (Size a) where
 
 instance (Storable a) => Size a where
   size = sizeOf @a (error "argument of sizeOf should not be used")
+
+instance Storable Color where
+  sizeOf    _ = 4
+  alignment _ = 4
+  peek ptr = do
+    red   <- peek $ castPtr ptr
+    green <- peekByteOff (castPtr ptr) 1
+    blue  <- peekByteOff (castPtr ptr) 2
+    alpha <- peekByteOff (castPtr ptr) 3
+    return $ Color
+      { red
+      , green
+      , blue
+      , alpha
+      }
+  poke ptr color = do
+    poke        (castPtr ptr)   color.red
+    pokeByteOff (castPtr ptr) 1 color.green
+    pokeByteOff (castPtr ptr) 2 color.blue
+    pokeByteOff (castPtr ptr) 3 color.alpha
 
 instance Storable Vertex where
   sizeOf    _ = 12

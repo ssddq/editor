@@ -31,5 +31,5 @@ void main()
 
   outColor = abs( sign(windingNumber) )
            * color
-           + (1 - abs( sign(windingNumber) )) * vec4(17/255.0, 17/255.0, 27/255.0, 1);
+           + (1 - abs( sign(windingNumber) )) * vec4(46/255.0, 52/255.0, 64/255.0, 1);
 }

@@ -1,10 +1,11 @@
 packages:
-  editor.cabal
   common/common.cabal
+  editor.cabal
   filebuffer/filebuffer.cabal
   parse-font/parse-font.cabal
   renderer/renderer.cabal
   shaders/shaders.cabal
+  syntax/syntax.cabal
   tools/formatter/formatter.cabal
   tools/parser/parser.cabal
   tools/preprocessor/preprocessor.cabal
