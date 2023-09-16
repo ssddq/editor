@@ -14,12 +14,16 @@ extra-source-files:
     src/subpass1.frag
     src/subpass2.vert
     src/subpass2.frag
+    src/subpass3.vert
+    src/subpass3.frag
     data/vert0.spv
     data/frag0.spv
     data/vert1.spv
     data/frag1.spv
     data/vert2.spv
     data/frag2.spv
+    data/vert3.spv
+    data/frag3.spv
 
 custom-setup
   setup-depends:

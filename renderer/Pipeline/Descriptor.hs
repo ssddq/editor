@@ -25,7 +25,7 @@ createDescriptors
   -> IO Descriptors
 createDescriptors device resources = do
   let descriptorPoolCreateInfo = mkDescriptorPoolCreateInfo $ map descriptorPoolSize resources
-      (descriptorSetLayoutCreateInfo, bindingCount) = mkDescriptorSetLayoutCreateInfo $ map descriptorSetLayoutBinding resources
+      (descriptorSetLayoutCreateInfo, _) = mkDescriptorSetLayoutCreateInfo $ map descriptorSetLayoutBinding resources
   layout <- perform $ vkCreateDescriptorSetLayout
                         |- device
                         |- p descriptorSetLayoutCreateInfo

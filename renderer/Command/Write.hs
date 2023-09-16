@@ -151,6 +151,38 @@ writeCursorDraw color font pDrawCmds pDrawData state = do
          &* set @"vertexOffset"  |* 0
          &* set @"firstInstance" |* state.instanceNum
 
+writeFullscreenDraw
+  :: Constants
+  -> Color
+  -> Ptr VkDrawIndexedIndirectCommand
+  -> Ptr DrawData
+  -> WriteState
+  -> IO (Ptr VkDrawIndexedIndirectCommand, Ptr DrawData, WriteState)
+writeFullscreenDraw constants color pDrawCmds pDrawData state = do
+  let drawData = DrawData { xOffset = fromIntegral constants.present.width / 2
+                          , yOffset = fromIntegral constants.present.height / 2
+                          , xx = fromIntegral constants.present.width
+                          , xy = 0
+                          , yx = 0
+                          , yy = fromIntegral constants.present.height
+                          , fSize = 1.0
+                          , color
+                          }
+  poke pDrawCmds drawCmd
+  poke pDrawData drawData
+  let instanceNum = state.instanceNum + 1
+      state' = state { instanceNum }
+  return $ ( advancePtr pDrawCmds 1
+           , advancePtr pDrawData 1
+           , state'
+           )
+  where drawCmd = createVk @VkDrawIndexedIndirectCommand
+          $ set @"indexCount"    |* 12
+         &* set @"instanceCount" |* 1
+         &* set @"firstIndex"    |* 0
+         &* set @"vertexOffset"  |* 0
+         &* set @"firstInstance" |* state.instanceNum
+
 -- | Note this function is unsafe at the moment, since there is no check to prevent
 -- | writing past the memory allocated by the pointer. The initial allocation is large
 -- | enough that this shouldn't matter, but this should be made safe eventually.
@@ -204,16 +236,22 @@ writeIndirectDraws bufferI bufferD vk = do
                                 , yMax = fromIntegral $ present.height - 10
                                 , xMin = 10
                                 }
-  state <- writeIndirectDrawStream
-             |- mode
-             |- constants
-             |- font
-             |- ptrI
-             |- ptrD
-             |- startState
-             |- toStream stream
-  let stream' = stream.updateVisualLineCount state.lines stream.textBuffer
-  return $ (state.instanceNum, stream')
+  (ptrI', ptrD', state) <- writeFullscreenDraw
+                             |- constants
+                             |- Color 46 52 64 255
+                             |- ptrI
+                             |- ptrD
+                             |- startState
+  state' <- writeIndirectDrawStream
+              |- mode
+              |- constants
+              |- font
+              |- ptrI'
+              |- ptrD'
+              |- state
+              |- toStream stream
+  let stream' = stream.updateVisualLineCount state'.lines stream.textBuffer
+  return $ (state'.instanceNum, stream')
   where Vk        {..} = vk
         Constants {..} = constants
         Font      {..} = font

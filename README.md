@@ -61,19 +61,21 @@ If you like to live dangerously, you can recompile it and enable saving with lit
 
 ## Performance
 
-Since this is in active development and many things (e.g. the exact content of the file being opened) can have dramatic impacts on performance, you should avoid taking the numbers below as anything more than *general* indications.
+Since this is in active development and many things (e.g. the exact content of the file being opened) can have dramatic impacts on performance, you should only use the numbers below as a *general* indication of performance.
 
 On a desktop computer with an AMD 7900X and RX 6750 XT:
 
-* Given a 1 GB file with 70-80 characters per line, scanning for newlines takes <2 seconds on my device to produce an array just over ~100MB. On a 100 MB file, it completes in < 0.4s. These seemed measurably slower than e.g. helix in a terminal. However, on extremely large files (1 GB) both memory usage and the initial start up time (i.e. perceived latency) are considerably lower.
+* Given a 1 GB file with 70-80 characters per line, scanning for newlines takes <2 seconds on my device to produce an array just over ~100MB. Note, however, that startup is still *instant*: 2 seconds is only the time it takes for the scan to complete (asynchronously).
+
+  On a 100 MB file, it completes in < 0.4s. These seemed measurably slower than e.g. helix in a terminal. However, on extremely large files (1 GB) both memory usage and the initial start up time (i.e. perceived latency) are considerably lower.
 
 * Frame times depend on the file, but hover somewhere around 1 ms on my desktop. On my far less capable Framework laptop, frame times were around 7 ms. These should be mostly impercetible.
 
+  Note that frame rates are hard-limited by the poll rate of `SDL.waitEvent`, which is roughly ~40 ms on my device. Frames are only ever rendered in response to SDL events (see: `main/Main.hs`), and you should expect your device to be idle for the most part.
+
 * Syntax highlighting incurs a variable performance penalty, but it can be as low as 10% (i.e. frame times only increase by 10%). This seems to be largely due to `flatparse` generating *extremely* efficient parsers! Requesting the maximum context currently allowed (512 bytes) on the current Haskell parser brought the penalty up to only 20%.
 
-  Note that parsers that attempt to color each letter individually tend to have dramatically worse performance, though it's still likely to be imperceptible. Parsers that can color whole words at a time have a much, much smaller performance impact.
-
-Note: frame rates are hard-limited by the poll rate of `SDL.waitEvent`, which is roughly ~40 ms on my device. Frames are only ever rendered in response to SDL events (see: `main/Main.hs`), and you should expect your device to be idle for the most part.
+  The main source of performance degradation here (other than excessive backtracking) is breaking up bytestrings: parsers that can color whole words at a time have a dramatically smaller performance impact than parsers that color letter-by-letter.
 
 ## Project layout
 

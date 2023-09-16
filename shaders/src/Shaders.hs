@@ -23,3 +23,9 @@ vertShader2 = $(makeRelativeToProject "data/vert2.spv" >>= embedFile)
 
 fragShader2 :: ByteString
 fragShader2 = $(makeRelativeToProject "data/frag2.spv" >>= embedFile)
+
+vertShader3 :: ByteString
+vertShader3 = $(makeRelativeToProject "data/vert3.spv" >>= embedFile)
+
+fragShader3 :: ByteString
+fragShader3 = $(makeRelativeToProject "data/frag3.spv" >>= embedFile)

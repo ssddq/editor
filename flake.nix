@@ -158,22 +158,7 @@
       ];
 
 
-      inputsFrom =
-      [
-        ( pkgs.lib.attrsets.filterAttrs
-          ( n: v:
-               n != "preprocessor"
-            && n != "parser"
-            && n != "formatter"
-            && n != "parse-font"
-            && n != "shaders"
-            && n != "filebuffer"
-            && n != "renderer"
-          ) self.editor.env
-        )
-      ];
-
-
+      inputsFrom = [ self.editor.env ];
     };
 
     devShells.${system} =

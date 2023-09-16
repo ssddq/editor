@@ -9,84 +9,64 @@ module Pipeline.RenderPass where
 
 import Vk
 
-import Pipeline.RenderPass.Info
+import Pipeline.Info
 
--- | Creates the first renderpass, with
--- | 2 subpasses, 3 attachments and
--- | a subpass dependency that the
--- | fragment shader for the second subpass
--- | must wait on the color attachment output of the first.
+-- | Creates the draw renderpass, as described in Pipeline.RenderPass.Info
+
 createRenderPass
   :: VkDevice
   -> IO VkRenderPass
 createRenderPass device = do
-  let subpassDescription0 = mkSubpassDescription
-                              |- []
-                              |- [colorReference 0, colorReference 1]
-      subpassDescription1 = mkSubpassDescription
-                              |- [inputReference 0, inputReference 1]
-                              |- [colorReference 2]
-      attachment0 = mkAttachmentDescription
-                      |- VK_FORMAT_R16G16_SFLOAT
-                      |- (CLEAR, UNDEFINED)
-                      |- (STORE, INPUT    )
+  let attachment0 = mkAttachmentDescription
+                      |- pass.attachment0.format
+                      |- (pass.attachment0.loadOp , pass.attachment0.initial)
+                      |- (pass.attachment0.storeOp, pass.attachment0.final  )
       attachment1 = mkAttachmentDescription
-                      |- VK_FORMAT_R8G8B8A8_UNORM
-                      |- (CLEAR, UNDEFINED)
-                      |- (STORE, INPUT    )
+                      |- pass.attachment1.format
+                      |- (pass.attachment1.loadOp , pass.attachment1.initial)
+                      |- (pass.attachment1.storeOp, pass.attachment1.final  )
       attachment2 = mkAttachmentDescription
-                      |- VK_FORMAT_B8G8R8A8_UNORM
-                      |- (CLEAR, UNDEFINED)
-                      |- (STORE, INPUT    )
-      subpassDependency01 = mkSubpassDependency
-                              |- BY_REGION
-                              |- (0, COLOR_ATTACHMENT_OUTPUT, COLOR_ATTACHMENT_READ)
-                              |- (1, FRAGMENT_SHADER        , INPUT_ATTACHMENT_READ)
-      subpassDependency11 = mkSubpassDependency
-                              |- BY_REGION
-                              |- (1, COLOR_ATTACHMENT_OUTPUT, COLOR_ATTACHMENT_READ)
-                              |- (1, FRAGMENT_SHADER        , INPUT_ATTACHMENT_READ)
+                      |- pass.attachment2.format
+                      |- (pass.attachment2.loadOp , pass.attachment2.initial)
+                      |- (pass.attachment2.storeOp, pass.attachment2.final  )
       renderPassCreateInfo = mkRenderPassCreateInfo
                                |- [ attachment0, attachment1, attachment2 ]
-                               |- [ subpassDescription0, subpassDescription1 ]
-                               |- [ subpassDependency01, subpassDependency11 ]
+                               |- [ pass.draw0.description, pass.resolve0.description, pass.clear0.description
+                                  , pass.draw1.description, pass.resolve1.description, pass.clear1.description
+                                  , pass.draw2.description, pass.resolve2.description, pass.clear2.description
+                                  , pass.draw3.description, pass.resolve0.description
+                                  ]
+                               |- pass.dependencies
   perform $ vkCreateRenderPass
               |- device
               |- p renderPassCreateInfo
               |- VK_NULL
+  where pass = renderPipelineInfo.drawPass
 
--- | Creates the second renderpass, with
--- | 1 subpass, 3 attachments and
--- | an external subpass dependency on the
--- | color attachment output of the previous renderpass.
+-- | Creates the antialiasing renderpass, as described in Pipeline.RenderPass.Info
+
 createRenderPass1
   :: VkDevice
   -> IO VkRenderPass
 createRenderPass1 device = do
-  let subpassDescription0 = mkSubpassDescription
-                              |- [inputReference 2]
-                              |- [colorReference 0]
-      attachment0 = mkAttachmentDescription
-                      |- VK_FORMAT_B8G8R8A8_UNORM
-                      |- (CLEAR, UNDEFINED)
-                      |- (STORE, PRESENT  )
+  let attachment0 = mkAttachmentDescription
+                      |- pass.attachment0.format
+                      |- (pass.attachment0.loadOp , pass.attachment0.initial)
+                      |- (pass.attachment0.storeOp, pass.attachment0.final  )
       attachment1 = mkAttachmentDescription
-                      |- VK_FORMAT_R16G16_SFLOAT
-                      |- (LOAD           , INPUT)
-                      |- (STORE_DONT_CARE, INPUT)
+                      |- pass.attachment1.format
+                      |- (pass.attachment1.loadOp , pass.attachment1.initial)
+                      |- (pass.attachment1.storeOp, pass.attachment1.final  )
       attachment2 = mkAttachmentDescription
-                      |- VK_FORMAT_B8G8R8A8_UNORM
-                      |- (LOAD , INPUT)
-                      |- (STORE, INPUT)
-      subpassDependency0 = mkSubpassDependency
-                             |- GLOBAL
-                             |- (EXTERNAL, COLOR_ATTACHMENT_OUTPUT, COLOR_ATTACHMENT_WRITE)
-                             |- (0       , FRAGMENT_SHADER        , INPUT_ATTACHMENT_READ )
+                      |- pass.attachment2.format
+                      |- (pass.attachment2.loadOp , pass.attachment2.initial)
+                      |- (pass.attachment2.storeOp, pass.attachment2.final  )
       renderPassCreateInfo = mkRenderPassCreateInfo
                                |- [ attachment0, attachment1, attachment2 ]
-                               |- [ subpassDescription0 ]
-                               |- [ subpassDependency0 ]
+                               |- [ pass.aa.description ]
+                               |- pass.dependencies
   perform $ vkCreateRenderPass
               |- device
               |- p renderPassCreateInfo
               |- VK_NULL
+  where pass = renderPipelineInfo.aaPass

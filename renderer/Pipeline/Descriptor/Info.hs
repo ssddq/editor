@@ -6,8 +6,6 @@ module Pipeline.Descriptor.Info where
 
 import Vk
 
-import Data.Vector qualified as V
-
 -- | Sets the create info for a uniform buffer descriptor,
 -- | with specified buffer size. Cannot be shared between queue families.
 mkBufferCreateInfo

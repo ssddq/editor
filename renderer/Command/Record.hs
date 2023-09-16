@@ -9,6 +9,7 @@ import Vk
 import Command.Record.Info
 import Command.Record.Utils
 
+import Data.Vector qualified as V
 
 cmdRenderPass0
   :: Word32
@@ -22,105 +23,52 @@ cmdRenderPass0 drawCount buffers vk = do
                               |- render
       viewport = mkViewport render
       scissor  = mkScissor render
+      cmdDraw    = subpassDraw vk buffers viewport scissor
+      cmdResolve = subpassResolve vk buffers viewport scissor
+      nextSubpass = vkCmdNextSubpass
+                      |- commandBuffer
+                      |- VK_SUBPASS_CONTENTS_INLINE
+      clearAttachments = clearColorAttachments
+                           |- commandBuffer
+                           |- render
+                           |- V.fromList [0,1]
   vkCmdBeginRenderPass
     |- commandBuffer
     |- p renderPassBeginInfo
     |- VK_SUBPASS_CONTENTS_INLINE
-  vkCmdBindPipeline
-    |- commandBuffer
-    |- VK_PIPELINE_BIND_POINT_GRAPHICS
-    |- renderPass0.subpass0.pipeline.handle
-  with viewport $ vkCmdSetViewport
-                    |- commandBuffer
-                    |- 0
-                    |- 1
-  with scissor $ vkCmdSetScissor
-                   |- commandBuffer
-                   |- 0
-                   |- 1
-  withArray [font.vertex.buffer, instanceData.buffer]
-    $ \pVertex -> withArray [0,0]
-    $ \pOffset -> vkCmdBindVertexBuffers
-                    |- commandBuffer
-                    |- 0
-                    |- 2
-                    |- pVertex
-                    |- pOffset
-  vkCmdBindIndexBuffer
-    |- commandBuffer
-    |- font.index.buffer
-    |- 0
-    |- VK_INDEX_TYPE_UINT32
-  bindDescriptorSet
-    |- commandBuffer
-    |- renderPass0.subpass0.pipeline.layout
-    |- renderPass0.subpass0.descriptors.set
-  with (present, unitsPerEmX2, ppi) $ (. castPtr)
-    $ vkCmdPushConstants
-        |- commandBuffer
-        |- renderPass0.subpass0.pipeline.layout
-        |- VK_SHADER_STAGE_VERTEX_BIT
-        |- 0
-        |- 16
-  let draw = vkCmdDrawIndexedIndirect
-               |- commandBuffer
-               |- indirectDraw.buffer
-               |- 0
-               |- drawCount
-               |- 20
-  draw
-  vkCmdNextSubpass
-    |- commandBuffer
-    |- VK_SUBPASS_CONTENTS_INLINE
-  vkCmdBindPipeline
-    |- commandBuffer
-    |- VK_PIPELINE_BIND_POINT_GRAPHICS
-    |- renderPass0.subpass1.pipeline.handle
-  with viewport $ vkCmdSetViewport
-                    |- commandBuffer
-                    |- 0
-                    |- 1
-  with scissor  $ vkCmdSetScissor
-                    |- commandBuffer
-                    |- 0
-                    |- 1
-  bindDescriptorSet
-    |- commandBuffer
-    |- renderPass0.subpass1.pipeline.layout
-    |- renderPass0.subpass1.descriptors.set
-  with (present, unitsPerEmX2, ppi) $ (. castPtr)
-    $ vkCmdPushConstants
-        |- commandBuffer
-        |- renderPass0.subpass1.pipeline.layout
-        |- VK_SHADER_STAGE_VERTEX_BIT
-        |- 0
-        |- 16
-  with2 fullscreenBuffer.vertex.buffer 0
-    $ \pVertex ->
-      \pOffset -> vkCmdBindVertexBuffers
-                    |- commandBuffer
-                    |- 0
-                    |- 1
-                    |- pVertex
-                    |- pOffset
-  vkCmdBindIndexBuffer
-    |- commandBuffer
-    |- fullscreenBuffer.index.buffer
-    |- 0
-    |- VK_INDEX_TYPE_UINT32
-  let drawFullscreen = vkCmdDrawIndexed
-                         |- commandBuffer
-                         |- 6
-                         |- 1
-                         |- 0
-                         |- 0
-                         |- 0
-  drawFullscreen
+  cmdDraw
+    |- renderPass0.draw0
+    |- (0, 1)
+  nextSubpass
+  cmdResolve renderPass0.resolve0
+  nextSubpass
+  clearAttachments
+  nextSubpass
+  cmdDraw
+    |- renderPass0.draw1
+    |- (20, drawCount - 1)
+  nextSubpass
+  cmdResolve renderPass0.resolve1
+  nextSubpass
+  clearAttachments
+  nextSubpass
+  -- cmdDraw
+  --   |- renderPass0.draw2
+  --   |- (0, 0)
+  nextSubpass
+  -- cmdResolve renderPass0.resolve2
+  nextSubpass
+  clearAttachments
+  nextSubpass
+  -- cmdDraw
+  --   |- renderPass0.draw3
+  --   |- (0, 0)
+  nextSubpass
+  -- cmdResolve renderPass0.resolve3
   vkCmdEndRenderPass
     |- commandBuffer
   return vk
   where Vk        {..} = vk
-        Font      {..} = font
         Buffers   {..} = buffers
         Constants {..} = constants
         RenderPipeline {..} = renderPipeline
@@ -143,7 +91,7 @@ cmdRenderPass1 buffers vk = do
   vkCmdBindPipeline
     |- commandBuffer
     |- VK_PIPELINE_BIND_POINT_GRAPHICS
-    |- renderPass1.subpass0.pipeline.handle
+    |- renderPass1.aa.pipeline.handle
   with viewport $ vkCmdSetViewport
                     |- commandBuffer
                     |- 0
@@ -167,12 +115,12 @@ cmdRenderPass1 buffers vk = do
     |- VK_INDEX_TYPE_UINT32
   bindDescriptorSet
     |- commandBuffer
-    |- renderPass1.subpass0.pipeline.layout
-    |- renderPass1.subpass0.descriptors.set
+    |- renderPass1.aa.pipeline.layout
+    |- renderPass1.aa.descriptors.set
   with (present, unitsPerEmX2, ppi) $ (. castPtr)
     $ vkCmdPushConstants
         |- commandBuffer
-        |- renderPass1.subpass0.pipeline.layout
+        |- renderPass1.aa.pipeline.layout
         |- VK_SHADER_STAGE_VERTEX_BIT
         |- 0
         |- 16

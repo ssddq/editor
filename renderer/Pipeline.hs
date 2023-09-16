@@ -12,6 +12,8 @@ import Vk
 
 import Pipeline.Descriptor.Info (Resource(..))
 
+import Pipeline.Info
+
 import Pipeline.Descriptor qualified as Descriptor
 import Pipeline.Graphics   qualified as Graphics
 import Pipeline.Images     qualified as Images
@@ -22,10 +24,10 @@ import Pipeline.RenderPass qualified as RenderPass
 -- | Also creates color attachment and sample image for these passes.
 
 createRenderPipeline
-  :: (Shaders, Shaders, Shaders)
+  :: (Shaders, Shaders, Shaders, Shaders)
   -> Vk    { renderPipeline = X, vulkan = I }
   -> IO Vk { renderPipeline = I, vulkan = I }
-createRenderPipeline (shaders0, shaders1, shaders2) vk = do
+createRenderPipeline (shaders0, shaders1, shaders2, shaders3) vk = do
   sampler <- Images.createSampler
                       |- device
   colorAttachment0 <- Images.createColorAttachmentImage
@@ -58,26 +60,55 @@ createRenderPipeline (shaders0, shaders1, shaders2) vk = do
                                 |- device
   vkRenderPass1 <- RenderPass.createRenderPass1
                                 |- device
-  (pipeline0, pipeline1, pipeline2) <- Graphics.createPipelines
-                                                  |- device
-                                                  |- (descriptors0 , descriptors1 , descriptors2)
-                                                  |- (shaders0     , shaders1     , shaders2    )
-                                                  |- (vkRenderPass0, vkRenderPass1)
-  let subpass0 = Subpass { pipeline    = pipeline0
+  pipelines <- Graphics.createPipelines
+                 |- device
+                 |- (descriptors0 , descriptors1 , descriptors2)
+                 |- (shaders0     , shaders1     , shaders2    , shaders3)
+                 |- (vkRenderPass0, vkRenderPass1)
+  let draw0    = Subpass { pipeline    = pipelines.draw0
                          , descriptors = descriptors0
                          }
-      subpass1 = Subpass { pipeline    = pipeline1
+      resolve0 = Subpass { pipeline    = pipelines.resolve0
                          , descriptors = descriptors1
                          }
-      subpass2 = Subpass { pipeline    = pipeline2
+      clear0   = Subpass { pipeline    = pipelines.clear0
+                         , descriptors = descriptors0
+                         }
+      draw1    = Subpass { pipeline    = pipelines.draw1
+                         , descriptors = descriptors0
+                         }
+      resolve1 = Subpass { pipeline    = pipelines.resolve1
+                         , descriptors = descriptors1
+                         }
+      clear1   = Subpass { pipeline    = pipelines.clear1
+                         , descriptors = descriptors0
+                         }
+      draw2    = Subpass { pipeline    = pipelines.draw2
+                         , descriptors = descriptors0
+                         }
+      resolve2 = Subpass { pipeline    = pipelines.resolve2
+                         , descriptors = descriptors1
+                         }
+      clear2   = Subpass { pipeline    = pipelines.clear2
+                         , descriptors = descriptors0
+                         }
+      draw3    = Subpass { pipeline    = pipelines.draw3
+                         , descriptors = descriptors0
+                         }
+      resolve3 = Subpass { pipeline    = pipelines.resolve3
+                         , descriptors = descriptors1
+                         }
+      aa       = Subpass { pipeline    = pipelines.aa
                          , descriptors = descriptors2
                          }
-      renderPass0 = RenderPass0 { handle   = vkRenderPass0
-                                , subpass0 = subpass0
-                                , subpass1 = subpass1
+      renderPass0 = RenderPass0 { handle = vkRenderPass0
+                                , draw0, resolve0, clear0
+                                , draw1, resolve1, clear1
+                                , draw2, resolve2, clear2
+                                , draw3, resolve3
                                 }
       renderPass1 = RenderPass1 { handle   = vkRenderPass1
-                                , subpass0 = subpass2
+                                , aa
                                 }
   return $ vk { renderPipeline = RenderPipeline { renderPass0
                                                 , renderPass1

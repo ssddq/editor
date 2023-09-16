@@ -58,6 +58,7 @@ initializeVulkan font file = do
   where renderPassShaders = ( Shaders vertShader0 fragShader0
                             , Shaders vertShader1 fragShader1
                             , Shaders vertShader2 fragShader2
+                            , Shaders vertShader3 fragShader3
                             )
 
 main :: IO ()

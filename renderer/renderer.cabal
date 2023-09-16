@@ -33,11 +33,10 @@ library
       Pipeline.Descriptor.Info
       Pipeline.Graphics
       Pipeline.Graphics.Info
-      Pipeline.Graphics.Utils
       Pipeline.Images
       Pipeline.Images.Info
       Pipeline.RenderPass
-      Pipeline.RenderPass.Info
+      Pipeline.Info
       Types
       Utils
       Vk

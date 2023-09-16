@@ -29,6 +29,7 @@ import GHC.TypeLits qualified as Type
 
 import Graphics.Vulkan.Core_1_0
 
+
 -- * Special type parameter flags
 
 -- | Flag that a field in Vk has been initialized with a value of type `a`.
@@ -148,13 +149,22 @@ data PushConstants = PushConstants
 
 data RenderPass0 = RenderPass0
   { handle   :: {-# UNPACK #-} !VkRenderPass
-  , subpass0 :: {-# UNPACK #-} !Subpass
-  , subpass1 :: {-# UNPACK #-} !Subpass
+  , draw0    :: {-# UNPACK #-} !Subpass
+  , resolve0 :: {-# UNPACK #-} !Subpass
+  , clear0   :: {-# UNPACK #-} !Subpass
+  , draw1    :: {-# UNPACK #-} !Subpass
+  , resolve1 :: {-# UNPACK #-} !Subpass
+  , clear1   :: {-# UNPACK #-} !Subpass
+  , draw2    :: {-# UNPACK #-} !Subpass
+  , resolve2 :: {-# UNPACK #-} !Subpass
+  , clear2   :: {-# UNPACK #-} !Subpass
+  , draw3    :: {-# UNPACK #-} !Subpass
+  , resolve3 :: {-# UNPACK #-} !Subpass
   }
 
 data RenderPass1 = RenderPass1
-  { handle   :: {-# UNPACK #-} !VkRenderPass
-  , subpass0 :: {-# UNPACK #-} !Subpass
+  { handle :: {-# UNPACK #-} !VkRenderPass
+  , aa     :: {-# UNPACK #-} !Subpass
   }
 
 -- | Contains all relevant Vulkan render pipeline data,
