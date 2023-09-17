@@ -249,6 +249,9 @@ data WriteState = WriteState
   , xMin        :: {-# UNPACK #-} !Float
   , lines       :: {-# UNPACK #-} !Int
   , color       :: {-# UNPACK #-} !Color
+  , currentLine :: {-# UNPACK #-} !Bool
+  , currentLineStart :: {-# UNPACK #-} !Float
+  , currentLineStop :: {-# UNPACK #-} !Float
   }
 
 

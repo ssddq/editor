@@ -37,6 +37,9 @@ initialState = WriteState
   , yMax = 0
   , lines = 0
   , color = Color 255 255 255 255
+  , currentLine = False
+  , currentLineStart = 0
+  , currentLineStop = 0
   }
 
 writeCharacterDraw
@@ -78,7 +81,11 @@ writeCharacterDraw char constants font pDrawCmds pDrawData state = case (drawSta
   Newline -> do let positionX = state.xMin
                     positionY = state.positionY + lineHeight
                     lines     = state.lines + 1
-                    state' = state { positionX, positionY, lines }
+                    currentLine = False
+                    currentLineStop = case (state.currentLine) of
+                      True  -> state.positionY + textHeight / 2
+                      False -> state.currentLineStop
+                    state' = state { positionX, positionY, lines, currentLine, currentLineStop }
                 return $ (Newline, pDrawCmds, pDrawData, state')
   Done    -> return $ (Done, pDrawCmds, pDrawData, state)
   where Font      {..} = font
@@ -119,14 +126,16 @@ writeCursorDraw color font pDrawCmds pDrawData state = do
                           , xx = 1.5
                           , xy = 0
                           , yx = 0
-                          , yy = 0.5 * lineHeight
+                          , yy = lineHeight / 2
                           , fSize = 1.0
                           , color
                           }
   poke pDrawCmds drawCmd
   poke pDrawData drawData
   let instanceNum = state.instanceNum + 1
-      state' = state { instanceNum }
+      currentLine = True
+      currentLineStart = state.positionY - lineHeight / 2 - textHeight / 2
+      state' = state { instanceNum, currentLine, currentLineStart }
   return $ ( advancePtr pDrawCmds 1
            , advancePtr pDrawData 1
            , state'

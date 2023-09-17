@@ -242,11 +242,11 @@ subpassClear vk buffers viewport scissor subpass = do
 {-# INLINE clearColorAttachments #-}
 clearColorAttachments
   :: VkCommandBuffer
-  -> Area
+  -> VkRect2D
   -> (Float, Float, Float, Float)
   -> V.Vector Word32
   -> IO ()
-clearColorAttachments commandBuffer area (r, g, b, a) indices =
+clearColorAttachments commandBuffer rect (r, g, b, a) indices =
   withVector attachments
     $ \attachmentCount pAttachments -> withVector clearRects
     $ \rectCount pRects -> vkCmdClearAttachments
@@ -263,15 +263,6 @@ clearColorAttachments commandBuffer area (r, g, b, a) indices =
           $ set @"rect"           |* rect
          &* set @"baseArrayLayer" |* 0
          &* set @"layerCount"     |* 1
-        rect = createVk @VkRect2D
-          $ set @"offset" |* offset
-         &* set @"extent" |* extent
-        offset = createVk @VkOffset2D
-          $ set @"x"      |* 0
-         &* set @"y"      |* 0
-        extent = createVk @VkExtent2D
-          $ set @"width"  |* area.width
-         &* set @"height" |* area.height
         clearColor = createVk @VkClearValue
           $ set   @"color"      |* clearColorValue
         clearColorValue = createVk @VkClearColorValue
@@ -287,3 +278,15 @@ blank = (0, 0, 0, 0)
 {-# INLINE bgColor #-}
 bgColor :: (Float, Float, Float, Float)
 bgColor = (46/255, 52/255, 64/255, 1)
+
+{-# INLINE bgColorHighlight #-}
+bgColorHighlight :: (Float, Float, Float, Float)
+bgColorHighlight = (59/255, 66/255, 82/255, 1)
+
+{-# INLINE present2RenderX #-}
+present2RenderX :: Constants -> Float -> Float
+present2RenderX Constants{..} x = x * (fromIntegral render.width / fromIntegral present.width)
+
+{-# INLINE present2RenderY #-}
+present2RenderY :: Constants -> Float -> Float
+present2RenderY Constants{..} y = y * (fromIntegral render.height / fromIntegral present.height)

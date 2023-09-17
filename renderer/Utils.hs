@@ -34,6 +34,7 @@ import Foreign.Storable.Tuple ()
 
 import Graphics.Vulkan.Core_1_0
 import Graphics.Vulkan.Marshal.Internal
+import Graphics.Vulkan.Marshal.Create
 
 (<.>)
   :: (Functor f)
@@ -142,6 +143,25 @@ withVector
   -> (Int -> Ptr a -> IO b)
   -> IO b
 withVector v f = withArray (V.toList v) (f $ V.length v)
+
+{-# INLINE mkOffset2D #-}
+mkOffset2D :: Int32 -> Int32 -> VkOffset2D
+mkOffset2D x y = createVk @VkOffset2D
+  $ set @"x" |* x
+ &* set @"y" |* y
+
+{-# INLINE mkExtent2D #-}
+mkExtent2D :: Word32 -> Word32 -> VkExtent2D
+mkExtent2D w h = createVk @VkExtent2D
+  $ set @"width"  |* w
+ &* set @"height" |* h
+
+{-# INLINE mkRect2D #-}
+mkRect2D :: (Int32, Int32) -> (Word32, Word32)-> VkRect2D
+mkRect2D (x,y) (w,h) = createVk @VkRect2D
+  $ set @"offset" |* mkOffset2D x y
+ &* set @"extent" |* mkExtent2D w h
+
 
 writeAllocation
   :: (Storable a)

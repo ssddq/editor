@@ -29,7 +29,7 @@ cmdRenderPass0 state buffers vk = do
                       |- VK_SUBPASS_CONTENTS_INLINE
       clearAttachments = clearColorAttachments
                            |- commandBuffer
-                           |- render
+                           |- mkRect2D (0, 0) (render.width, render.height)
   vkCmdBeginRenderPass
     |- commandBuffer
     |- p renderPassBeginInfo
@@ -38,6 +38,16 @@ cmdRenderPass0 state buffers vk = do
   nextSubpass
   -- resolve0
   clearAttachments bgColor [0]
+  clearColorAttachments
+    |- commandBuffer
+    |- mkRect2D ( round . present2RenderX constants $ state.xMin
+                , round . present2RenderY constants $ state.currentLineStart
+                )
+                ( round . present2RenderX constants $ state.xMax - state.xMin
+                , round . present2RenderY constants $ state.currentLineStop - state.currentLineStart
+                )
+    |- bgColorHighlight
+    |- [0]
   nextSubpass
   -- clear0
   nextSubpass
