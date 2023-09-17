@@ -30,18 +30,12 @@ createRenderPipeline
 createRenderPipeline (shaders0, shaders1, shaders2, shaders3) vk = do
   sampler <- Images.createSampler
                       |- device
-  colorAttachment0 <- Images.createColorAttachmentImage
-                               |- device
-                               |- allocator
-                               |- queueFamilyIndex
-                               |- VK_FORMAT_R16G16_SFLOAT
-                               |- (render.width, render.height)
-  colorAttachment1 <- Images.createColorAttachmentImage
-                               |- device
-                               |- allocator
-                               |- queueFamilyIndex
-                               |- VK_FORMAT_R8G8B8A8_UNORM
-                               |- (render.width, render.height)
+  colorAttachment <- Images.createColorAttachmentImage
+                              |- device
+                              |- allocator
+                              |- queueFamilyIndex
+                              |- VK_FORMAT_R16G16_SFLOAT
+                              |- (render.width, render.height)
   sampleAttachment <- Images.createSampleImage
                                |- device
                                |- allocator
@@ -50,9 +44,7 @@ createRenderPipeline (shaders0, shaders1, shaders2, shaders3) vk = do
   descriptors0 <- Descriptor.empty
   descriptors1 <- Descriptor.createDescriptors
                                |- device
-                               |- [ InputAttachment 1 colorAttachment0.imageView
-                                  , InputAttachment 2 colorAttachment1.imageView
-                                  ]
+                               |- [ InputAttachment 1 colorAttachment.imageView ]
   descriptors2 <- Descriptor.createDescriptors
                                |- device
                                |- [ ImageSampler 1 sampleAttachment.imageView sampler ]
@@ -112,8 +104,7 @@ createRenderPipeline (shaders0, shaders1, shaders2, shaders3) vk = do
                                 }
   return $ vk { renderPipeline = RenderPipeline { renderPass0
                                                 , renderPass1
-                                                , colorAttachment0
-                                                , colorAttachment1
+                                                , colorAttachment
                                                 , sampleAttachment
                                                 , sampler
                                                 }

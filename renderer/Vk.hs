@@ -51,6 +51,9 @@ import Foreign.Storable
 import Graphics.Vulkan
 import Graphics.Vulkan.Core_1_0
 import Graphics.Vulkan.Marshal.Create
+import Graphics.Vulkan.Ext.VK_KHR_swapchain
+
+-- * Global constants
 
 defaultConstants :: Constants
 defaultConstants = Constants
@@ -62,6 +65,35 @@ defaultConstants = Constants
   , fSize      = 20.0
   }
 
+
+{-# INLINE build #-}
+build :: Build
+build = release
+
+{-# INLINE debug #-}
+debug :: Build
+debug = Build
+  { presentMode = VK_PRESENT_MODE_MAILBOX_KHR
+  , instanceLayers = [ "VK_LAYER_LUNARG_api_dump" ]
+  }
+
+{-# INLINE dev #-}
+dev :: Build
+dev = Build
+  { presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR
+  , instanceLayers = [ "VK_LAYER_KHRONOS_validation"
+                     , "VK_LAYER_MESA_overlay"
+                     ]
+  }
+
+{-# INLINE release #-}
+release :: Build
+release = Build
+  { presentMode = VK_PRESENT_MODE_MAILBOX_KHR
+  , instanceLayers = []
+  }
+
+-- * Main renderer state
 
 generate [d|
   data Vk commandPool

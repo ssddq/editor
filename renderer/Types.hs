@@ -28,7 +28,7 @@ import GHC.Records  qualified as GHC
 import GHC.TypeLits qualified as Type
 
 import Graphics.Vulkan.Core_1_0
-
+import Graphics.Vulkan.Ext.VK_KHR_swapchain
 
 -- * Special type parameter flags
 
@@ -74,6 +74,11 @@ data Buffers = Buffers
   , commandBuffer :: {-# UNPACK #-} !VkCommandBuffer
   , indirectDraw  :: {-# UNPACK #-} !Buffer
   , instanceData  :: {-# UNPACK #-} !Buffer
+  }
+
+data Build = Build
+  { presentMode    :: {-# UNPACK #-} !VkPresentModeKHR
+  , instanceLayers :: ![String]
   }
 
 data CharacterMap = Map Word32 Int
@@ -140,6 +145,13 @@ data Pipeline = Pipeline
   , layout :: {-# UNPACK #-} !VkPipelineLayout
   }
 
+data PipelineShaders = PipelineShaders
+  { draw    :: {-# UNPACK #-} !BS.ByteString
+  , resolve :: {-# UNPACK #-} !BS.ByteString
+  , clear   :: {-# UNPACK #-} !BS.ByteString
+  , aa      :: {-# UNPACK #-} !BS.ByteString
+  }
+
 data PushConstants = PushConstants
   { area :: {-# UNPACK #-} !Area
   }
@@ -176,8 +188,7 @@ data RenderPass1 = RenderPass1
 data RenderPipeline = RenderPipeline
   { renderPass0      :: {-# UNPACK #-} !RenderPass0
   , renderPass1      :: {-# UNPACK #-} !RenderPass1
-  , colorAttachment0 :: {-# UNPACK #-} !Attachment
-  , colorAttachment1 :: {-# UNPACK #-} !Attachment
+  , colorAttachment  :: {-# UNPACK #-} !Attachment
   , sampleAttachment :: {-# UNPACK #-} !Attachment
   , sampler          :: {-# UNPACK #-} !(Ptr VkSampler)
   }
@@ -201,6 +212,7 @@ data StreamBuffer b = StreamBuffer
   { textBuffer            :: b
   , streamer              :: b -> S.Stream (S.Of Symbol) IO ()
   , updateVisualLineCount :: Int -> b -> b
+  , bgColor               :: {-# UNPACK #-} !Color
   }
 
 -- | Subpass contains its pipeline, pipeline layout and descriptor info.
@@ -226,6 +238,17 @@ data Vulkan = Vulkan
   , allocator        :: {-# UNPACK #-} !VmaAllocator
   , swapchain        :: {-# UNPACK #-} !VkSwapchainKHR
   , imageViews       :: {-# UNPACK #-} !ImageViews
+  }
+
+data WriteState = WriteState
+  { instanceNum :: {-# UNPACK #-} !Word32
+  , positionX   :: {-# UNPACK #-} !Float
+  , positionY   :: {-# UNPACK #-} !Float
+  , xMax        :: {-# UNPACK #-} !Float
+  , yMax        :: {-# UNPACK #-} !Float
+  , xMin        :: {-# UNPACK #-} !Float
+  , lines       :: {-# UNPACK #-} !Int
+  , color       :: {-# UNPACK #-} !Color
   }
 
 
@@ -318,6 +341,7 @@ instance Storable DrawData where
       , yy
       , color
       }
+  {-# INLINE poke #-}
   poke ptr drawData = do
     poke        (castPtr ptr)    drawData.xOffset
     pokeByteOff (castPtr ptr) 4  drawData.yOffset
@@ -335,6 +359,7 @@ instance Storable Area where
     width  <- peek (castPtr ptr)
     height <- peek (castPtr ptr)
     return $ Area { width, height }
+  {-# INLINE poke #-}
   poke ptr Area { width, height } = do
     poke        (castPtr ptr)   width
     pokeByteOff (castPtr ptr) 4 height
@@ -344,4 +369,4 @@ instance Storable Area where
 toStream
   :: StreamBuffer b
   -> S.Stream (S.Of Symbol) IO ()
-toStream (StreamBuffer b f _) = f b
+toStream (StreamBuffer b f _ _) = f b

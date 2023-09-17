@@ -25,12 +25,8 @@ createRenderPass device = do
                       |- pass.attachment1.format
                       |- (pass.attachment1.loadOp , pass.attachment1.initial)
                       |- (pass.attachment1.storeOp, pass.attachment1.final  )
-      attachment2 = mkAttachmentDescription
-                      |- pass.attachment2.format
-                      |- (pass.attachment2.loadOp , pass.attachment2.initial)
-                      |- (pass.attachment2.storeOp, pass.attachment2.final  )
       renderPassCreateInfo = mkRenderPassCreateInfo
-                               |- [ attachment0, attachment1, attachment2 ]
+                               |- [ attachment0, attachment1 ]
                                |- [ pass.draw0.description, pass.resolve0.description, pass.clear0.description
                                   , pass.draw1.description, pass.resolve1.description, pass.clear1.description
                                   , pass.draw2.description, pass.resolve2.description, pass.clear2.description

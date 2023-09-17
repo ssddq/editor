@@ -44,15 +44,15 @@ createPipelines device descriptors shaders renderPasses = do
                                        |- renderPass0
                                        |- n
                                        |- vertexInputState0
-                                       |- colorBlendAdd2
+                                       |- colorBlendAdd
       withResolvePipelineCreateInfo n = withPipelineCreateInfo
                                           |- device
                                           |- descriptors1
                                           |- (vertModule1, fragModule1)
                                           |- renderPass0
                                           |- n
-                                          |- vertexInputState1
-                                          |- colorBlendSrcAlpha1
+                                          |- vertexInputState0
+                                          |- colorBlendSrcAlpha
       withClearPipelineCreateInfo n = withPipelineCreateInfo
                                         |- device
                                         |- descriptors0
@@ -60,7 +60,7 @@ createPipelines device descriptors shaders renderPasses = do
                                         |- renderPass0
                                         |- n
                                         |- vertexInputState0
-                                        |- colorBlendSrc2
+                                        |- colorBlendSrc
       withAAPipelineCreateInfo = withPipelineCreateInfo
                                    |- device
                                    |- descriptors2
@@ -68,7 +68,7 @@ createPipelines device descriptors shaders renderPasses = do
                                    |- renderPass1
                                    |- 0
                                    |- vertexInputState1
-                                   |- colorBlendAdd1
+                                   |- colorBlendAdd
   pipelines <-
     withDrawPipelineCreateInfo    0  $ \layout0  info0  ->
     withResolvePipelineCreateInfo 1  $ \layout1  info1  ->

@@ -15,54 +15,20 @@ import Data.ByteString.Lazy qualified as BL
 
 -- | Additive color attachment color and alpha blending.
 
-colorBlendAdd2 :: VkPipelineColorBlendStateCreateInfo
-colorBlendAdd2 = createVk @VkPipelineColorBlendStateCreateInfo
+colorBlendSrc :: VkPipelineColorBlendStateCreateInfo
+colorBlendSrc = createVk @VkPipelineColorBlendStateCreateInfo
    $ set                @"sType"               |* VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO
   &* set                @"pNext"               |* VK_NULL
   &* set                @"flags"               |* VK_ZERO_FLAGS
   &* set                @"logicOpEnable"       |* VK_FALSE
   &* set                @"logicOp"             |* VK_LOGIC_OP_COPY
   &* setListCountAndRef @"attachmentCount"  -- |*
-                        @"pAttachments"        |* [colorBlendAttachmentState0, colorBlendAttachmentState1]
+                        @"pAttachments"        |* [colorBlendAttachmentState]
   &* setAt              @"blendConstants" @0   |* 0
   &* setAt              @"blendConstants" @1   |* 0
   &* setAt              @"blendConstants" @2   |* 0
   &* setAt              @"blendConstants" @3   |* 0
-  where colorBlendAttachmentState0 = createVk @VkPipelineColorBlendAttachmentState
-          $ set @"colorWriteMask"       |*      VK_COLOR_COMPONENT_R_BIT .|. VK_COLOR_COMPONENT_G_BIT
-                                            .|. VK_COLOR_COMPONENT_B_BIT .|. VK_COLOR_COMPONENT_A_BIT
-         &* set @"blendEnable"          |* VK_TRUE
-         &* set @"srcColorBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"dstColorBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"colorBlendOp"         |* VK_BLEND_OP_ADD
-         &* set @"srcAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"dstAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"alphaBlendOp"         |* VK_BLEND_OP_ADD
-        colorBlendAttachmentState1 = createVk @VkPipelineColorBlendAttachmentState
-          $ set @"colorWriteMask"       |*      VK_COLOR_COMPONENT_R_BIT .|. VK_COLOR_COMPONENT_G_BIT
-                                            .|. VK_COLOR_COMPONENT_B_BIT .|. VK_COLOR_COMPONENT_A_BIT
-         &* set @"blendEnable"          |* VK_FALSE
-         &* set @"srcColorBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"dstColorBlendFactor"  |* VK_BLEND_FACTOR_ZERO
-         &* set @"colorBlendOp"         |* VK_BLEND_OP_ADD
-         &* set @"srcAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"dstAlphaBlendFactor"  |* VK_BLEND_FACTOR_ZERO
-         &* set @"alphaBlendOp"         |* VK_BLEND_OP_ADD
-
-colorBlendSrc2 :: VkPipelineColorBlendStateCreateInfo
-colorBlendSrc2 = createVk @VkPipelineColorBlendStateCreateInfo
-   $ set                @"sType"               |* VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO
-  &* set                @"pNext"               |* VK_NULL
-  &* set                @"flags"               |* VK_ZERO_FLAGS
-  &* set                @"logicOpEnable"       |* VK_FALSE
-  &* set                @"logicOp"             |* VK_LOGIC_OP_COPY
-  &* setListCountAndRef @"attachmentCount"  -- |*
-                        @"pAttachments"        |* [colorBlendAttachmentState0, colorBlendAttachmentState1]
-  &* setAt              @"blendConstants" @0   |* 0
-  &* setAt              @"blendConstants" @1   |* 0
-  &* setAt              @"blendConstants" @2   |* 0
-  &* setAt              @"blendConstants" @3   |* 0
-  where colorBlendAttachmentState0 = createVk @VkPipelineColorBlendAttachmentState
+  where colorBlendAttachmentState = createVk @VkPipelineColorBlendAttachmentState
           $ set @"colorWriteMask"       |*      VK_COLOR_COMPONENT_R_BIT .|. VK_COLOR_COMPONENT_G_BIT
                                             .|. VK_COLOR_COMPONENT_B_BIT .|. VK_COLOR_COMPONENT_A_BIT
          &* set @"blendEnable"          |* VK_TRUE
@@ -72,19 +38,9 @@ colorBlendSrc2 = createVk @VkPipelineColorBlendStateCreateInfo
          &* set @"srcAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
          &* set @"dstAlphaBlendFactor"  |* VK_BLEND_FACTOR_ZERO
          &* set @"alphaBlendOp"         |* VK_BLEND_OP_ADD
-        colorBlendAttachmentState1 = createVk @VkPipelineColorBlendAttachmentState
-          $ set @"colorWriteMask"       |*      VK_COLOR_COMPONENT_R_BIT .|. VK_COLOR_COMPONENT_G_BIT
-                                            .|. VK_COLOR_COMPONENT_B_BIT .|. VK_COLOR_COMPONENT_A_BIT
-         &* set @"blendEnable"          |* VK_FALSE
-         &* set @"srcColorBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"dstColorBlendFactor"  |* VK_BLEND_FACTOR_ZERO
-         &* set @"colorBlendOp"         |* VK_BLEND_OP_ADD
-         &* set @"srcAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
-         &* set @"dstAlphaBlendFactor"  |* VK_BLEND_FACTOR_ZERO
-         &* set @"alphaBlendOp"         |* VK_BLEND_OP_ADD
 
-colorBlendAdd1 :: VkPipelineColorBlendStateCreateInfo
-colorBlendAdd1 = createVk @VkPipelineColorBlendStateCreateInfo
+colorBlendAdd :: VkPipelineColorBlendStateCreateInfo
+colorBlendAdd = createVk @VkPipelineColorBlendStateCreateInfo
    $ set                @"sType"               |* VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO
   &* set                @"pNext"               |* VK_NULL
   &* set                @"flags"               |* VK_ZERO_FLAGS
@@ -107,8 +63,8 @@ colorBlendAdd1 = createVk @VkPipelineColorBlendStateCreateInfo
          &* set @"dstAlphaBlendFactor"  |* VK_BLEND_FACTOR_ONE
          &* set @"alphaBlendOp"         |* VK_BLEND_OP_ADD
 
-colorBlendSrcAlpha1 :: VkPipelineColorBlendStateCreateInfo
-colorBlendSrcAlpha1 = createVk @VkPipelineColorBlendStateCreateInfo
+colorBlendSrcAlpha :: VkPipelineColorBlendStateCreateInfo
+colorBlendSrcAlpha = createVk @VkPipelineColorBlendStateCreateInfo
    $ set                @"sType"               |* VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO
   &* set                @"pNext"               |* VK_NULL
   &* set                @"flags"               |* VK_ZERO_FLAGS

@@ -7,7 +7,8 @@
 // or not.
 
 layout(input_attachment_index = 0, set = 0, binding = 1) uniform subpassInput inWind;
-layout(input_attachment_index = 0, set = 0, binding = 2) uniform subpassInput inColor;
+
+layout(location = 0) in vec4 color;
 
 layout(location = 0) out vec4 outColor;
 
@@ -15,7 +16,7 @@ layout(location = 0) out vec4 outColor;
 void main()
 {
   vec2 wind  = subpassLoad(inWind).rg;
-  vec4 color = subpassLoad(inColor);
+  // vec4 color = subpassLoad(inColor);
 
   // Evaluate the winding number using the components
   // of the color attachment output of the previous subpass (renderpass 1, subpass 0).

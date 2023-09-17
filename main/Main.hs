@@ -250,7 +250,7 @@ loadFile path vk = do
                      , lines
                      , visualLineCount = maxBound
                      }
-      stream = StreamBuffer filebuffer (streamFilebuffer hsParser) updateVisualLineCount
+      stream = StreamBuffer filebuffer (streamFilebuffer hsParser) updateVisualLineCount $ Color 46 52 64 255
   return $ vk { stream }
   where updateVisualLineCount :: Int -> Filebuffer -> Filebuffer
         updateVisualLineCount n filebuffer = filebuffer { visualLineCount = n }

@@ -10,10 +10,8 @@ layout(location = 0) in vec2  coordinates;
 layout(location = 1) in float fill;
 layout(location = 2) in float orientationBase;
 layout(location = 3) in float orientationControl;
-layout(location = 4) in vec4  color;
 
 layout(location = 0) out vec2 outWind;
-layout(location = 1) out vec4 outColor;
 
 
 void main()
@@ -76,9 +74,6 @@ void main()
 
   outWind =        drawFull  * fillBase
           + (1.0 - drawFull) * fillControl;
-
-
-  outColor = color;
 }
 
 

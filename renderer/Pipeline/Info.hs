@@ -46,7 +46,6 @@ data DrawPassInfo = DrawPassInfo
   , dependencies :: [VkSubpassDependency]
   , attachment0  :: {-# UNPACK #-} !AttachmentInfo
   , attachment1  :: {-# UNPACK #-} !AttachmentInfo
-  , attachment2  :: {-# UNPACK #-} !AttachmentInfo
   }
 
 data DrawSubpass = DrawSubpass
@@ -138,20 +137,19 @@ drawPassInfo = DrawPassInfo
                    ]
   , attachment0
   , attachment1
-  , attachment2
   }
   where clear = SubpassInfo clearSubpassDescription
         clearSubpassDescription = mkSubpassDescription
                                     |- []
-                                    |- [colorReference 0, colorReference 1]
+                                    |- [colorReference 0]
         draw = SubpassInfo drawDescription
         resolve = SubpassInfo resolveDescription
         drawDescription = mkSubpassDescription
                             |- []
-                            |- [colorReference 0, colorReference 1]
+                            |- [colorReference 0]
         resolveDescription = mkSubpassDescription
-                               |- [inputReference 0, inputReference 1]
-                               |- [colorReference 2]
+                               |- [inputReference 0]
+                               |- [colorReference 1]
         drawResolveDep d r = mkSubpassDependency
                                |- BY_REGION
                                |- (d, COLOR_ATTACHMENT_OUTPUT, COLOR_ATTACHMENT_WRITE)
@@ -176,13 +174,6 @@ drawPassInfo = DrawPassInfo
                         , storeOp = STORE
                         }
         attachment1 = AttachmentInfo
-                        { format = VK_FORMAT_R8G8B8A8_UNORM
-                        , initial = UNDEFINED
-                        , final = INPUT
-                        , loadOp = CLEAR
-                        , storeOp = STORE
-                        }
-        attachment2 = AttachmentInfo
                         { format = VK_FORMAT_B8G8R8A8_UNORM
                         , initial = UNDEFINED
                         , final = INPUT

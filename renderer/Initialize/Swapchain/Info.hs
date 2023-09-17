@@ -9,9 +9,7 @@ import Graphics.Vulkan.Ext.VK_KHR_swapchain
 -- | Swapchain create info for a swapchain with a given
 -- | minImageCount, width, heigth and (graphics) queue family.
 -- | Presentation is first-in-first-out.
--- |
--- | Note: for measuring frame times, use VK_PRESENT_MODE_IMMEDIATE_KHR
--- | to prevent the framerate being capped at the refresh rate of the display.
+
 mkSwapchainCreateInfo
   :: VkSurfaceKHR
   -> Word32                    -- minImageCount
@@ -37,7 +35,7 @@ mkSwapchainCreateInfo surface imageCount width height queueFamilyIndex oldSwapch
                          @"pQueueFamilyIndices"   |* [queueFamilyIndex]
    &* set                @"preTransform"          |* VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
    &* set                @"compositeAlpha"        |* VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
-   &* set                @"presentMode"           |* VK_PRESENT_MODE_FIFO_KHR
+   &* set                @"presentMode"           |* build.presentMode
    &* set                @"clipped"               |* VK_FALSE
    &* set                @"oldSwapchain"          |* oldSwapchain
   where imageExtent width height = createVk @VkExtent2D

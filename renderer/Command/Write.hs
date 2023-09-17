@@ -16,18 +16,6 @@ data DrawState
   | Newline
   | Done
 
-data WriteState = WriteState
-  { instanceNum :: {-# UNPACK #-} !Word32
-  , positionX   :: {-# UNPACK #-} !Float
-  , positionY   :: {-# UNPACK #-} !Float
-  , xMax        :: {-# UNPACK #-} !Float
-  , yMax        :: {-# UNPACK #-} !Float
-  , xMin        :: {-# UNPACK #-} !Float
-  , lines       :: {-# UNPACK #-} !Int
-  , color       :: {-# UNPACK #-} !Color
-  }
-
-
 drawState
   :: Char
   -> Float
@@ -226,7 +214,7 @@ writeIndirectDraws
   :: Buffer
   -> Buffer
   -> Vk { font = I, stream = A b }
-  -> IO (Word32, b)
+  -> IO (WriteState, b)
 writeIndirectDraws bufferI bufferD vk = do
   let ptrI = castPtr bufferI.ptr
       ptrD = castPtr bufferD.ptr
@@ -236,22 +224,16 @@ writeIndirectDraws bufferI bufferD vk = do
                                 , yMax = fromIntegral $ present.height - 10
                                 , xMin = 10
                                 }
-  (ptrI', ptrD', state) <- writeFullscreenDraw
-                             |- constants
-                             |- Color 46 52 64 255
-                             |- ptrI
-                             |- ptrD
-                             |- startState
-  state' <- writeIndirectDrawStream
-              |- mode
-              |- constants
-              |- font
-              |- ptrI'
-              |- ptrD'
-              |- state
-              |- toStream stream
-  let stream' = stream.updateVisualLineCount state'.lines stream.textBuffer
-  return $ (state'.instanceNum, stream')
+  state <- writeIndirectDrawStream
+             |- mode
+             |- constants
+             |- font
+             |- ptrI
+             |- ptrD
+             |- startState
+             |- toStream stream
+  let stream' = stream.updateVisualLineCount state.lines stream.textBuffer
+  return $ (state, stream')
   where Vk        {..} = vk
         Constants {..} = constants
         Font      {..} = font

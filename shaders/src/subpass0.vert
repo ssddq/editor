@@ -39,7 +39,6 @@ layout(location = 0) out vec2  coordinates;
 layout(location = 1) out float fill;
 layout(location = 2) out float orientationBase;
 layout(location = 3) out float orientationControl;
-layout(location = 4) out vec4  outColor;
 
 void main()
 {
@@ -85,6 +84,4 @@ void main()
   // where the 'control' triangle is oriented clockwise.
 
   orientationControl = bitfieldExtract(flags, 4, 1);
-
-  outColor = vec4(red, green, blue, alpha);
 }

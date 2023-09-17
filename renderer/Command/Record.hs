@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -F -pgmF=tpr-pp #-}
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedLists #-}
 
 module Command.Record where
 
@@ -9,14 +10,12 @@ import Vk
 import Command.Record.Info
 import Command.Record.Utils
 
-import Data.Vector qualified as V
-
 cmdRenderPass0
-  :: Word32
+  :: WriteState
   -> Buffers
   -> Vk    { font = I, fullscreenBuffer = I, renderPipeline = I, vulkan = I }
   -> IO Vk { font = I, fullscreenBuffer = I, renderPipeline = I, vulkan = I }
-cmdRenderPass0 drawCount buffers vk = do
+cmdRenderPass0 state buffers vk = do
   let renderPassBeginInfo = mkRenderPassBeginInfo
                               |- renderPass0.handle
                               |- framebuffer.renderPass0
@@ -31,40 +30,40 @@ cmdRenderPass0 drawCount buffers vk = do
       clearAttachments = clearColorAttachments
                            |- commandBuffer
                            |- render
-                           |- V.fromList [0,1]
   vkCmdBeginRenderPass
     |- commandBuffer
     |- p renderPassBeginInfo
     |- VK_SUBPASS_CONTENTS_INLINE
-  cmdDraw
-    |- renderPass0.draw0
-    |- (0, 1)
+  -- draw0
   nextSubpass
-  cmdResolve renderPass0.resolve0
+  -- resolve0
+  clearAttachments bgColor [0]
   nextSubpass
-  clearAttachments
+  -- clear0
   nextSubpass
+  -- draw1
   cmdDraw
     |- renderPass0.draw1
-    |- (20, drawCount - 1)
+    |- (0, state.instanceNum)
   nextSubpass
-  cmdResolve renderPass0.resolve1
+  -- resolve1
+  cmdResolve
+    |- renderPass0.resolve1
+    |- (0, state.instanceNum)
   nextSubpass
-  clearAttachments
+  -- clear1
+  clearAttachments blank [0]
   nextSubpass
-  -- cmdDraw
-  --   |- renderPass0.draw2
-  --   |- (0, 0)
+  -- draw2
   nextSubpass
-  -- cmdResolve renderPass0.resolve2
+  -- resolve2
   nextSubpass
-  clearAttachments
+  -- clear2
+  clearAttachments blank [0]
   nextSubpass
-  -- cmdDraw
-  --   |- renderPass0.draw3
-  --   |- (0, 0)
+  -- draw3
   nextSubpass
-  -- cmdResolve renderPass0.resolve3
+  -- resolve3
   vkCmdEndRenderPass
     |- commandBuffer
   return vk
@@ -143,15 +142,20 @@ cmdRenderPass1 buffers vk = do
 
 recordCommandBuffer
   :: Buffers
-  -> Word32
+  -> WriteState
   -> Vk    { font = I, fullscreenBuffer = I, renderPipeline = I, vulkan = I }
   -> IO Vk { font = I, fullscreenBuffer = I, renderPipeline = I, vulkan = I }
-recordCommandBuffer buffers drawCount vk = do
+recordCommandBuffer buffers state vk = do
   vkBeginCommandBuffer
     |- commandBuffer
     |- p commandBufferBeginInfo
-  cmdRenderPass0 drawCount buffers vk
-  cmdRenderPass1 buffers vk
+  cmdRenderPass0
+    |- state
+    |- buffers
+    |- vk
+  cmdRenderPass1
+    |- buffers
+    |- vk
   vkEndCommandBuffer
     |- commandBuffer
   return vk

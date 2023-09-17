@@ -71,10 +71,7 @@ initializeVk vk = do
               , constants = newConstants
               }
   where constants = vk.constants
-        instanceLayers = [ "VK_LAYER_KHRONOS_validation" -- validation layers
-                         , "VK_LAYER_MESA_overlay"       -- GPU name + FPS overlay, use with VK_PRESENT_MODE_IMMEDIATE_KHR
-                         -- , "VK_LAYER_LUNARG_api_dump"    -- print API calls to stdout
-                         ]
+        instanceLayers = build.instanceLayers
         instanceExtensions = [ VK_EXT_DEBUG_UTILS_EXTENSION_NAME
                              ]
         deviceLayers     = []

@@ -109,8 +109,9 @@ subpassResolve
   -> VkViewport
   -> VkRect2D
   -> Subpass
+  -> (VkDeviceSize, Word32)
   -> IO ()
-subpassResolve vk buffers viewport scissor subpass = do
+subpassResolve vk buffers viewport scissor subpass (offset, drawCount) = do
   vkCmdBindPipeline
     |- commandBuffer
     |- VK_PIPELINE_BIND_POINT_GRAPHICS
@@ -134,26 +135,36 @@ subpassResolve vk buffers viewport scissor subpass = do
         |- VK_SHADER_STAGE_VERTEX_BIT
         |- 0
         |- 16
-  with2 fullscreenBuffer.vertex.buffer 0
-    $ \pVertex ->
-      \pOffset -> vkCmdBindVertexBuffers
-                    |- commandBuffer
-                    |- 0
-                    |- 1
-                    |- pVertex
-                    |- pOffset
+  withVector [font.vertex.buffer, instanceData.buffer]
+    $ \n pVertex -> withArray [0,0]
+    $ \pOffset   -> vkCmdBindVertexBuffers
+                      |- commandBuffer
+                      |- 0
+                      |- fromIntegral n
+                      |- pVertex
+                      |- pOffset
   vkCmdBindIndexBuffer
     |- commandBuffer
-    |- fullscreenBuffer.index.buffer
+    |- font.index.buffer
     |- 0
     |- VK_INDEX_TYPE_UINT32
-  vkCmdDrawIndexed
+  bindDescriptorSet
     |- commandBuffer
-    |- 6
-    |- 1
-    |- 0
-    |- 0
-    |- 0
+    |- subpass.pipeline.layout
+    |- subpass.descriptors.set
+  with (present, unitsPerEmX2, ppi) $ (. castPtr)
+    $ vkCmdPushConstants
+        |- commandBuffer
+        |- subpass.pipeline.layout
+        |- VK_SHADER_STAGE_VERTEX_BIT
+        |- 0
+        |- 16
+  vkCmdDrawIndexedIndirect
+    |- commandBuffer
+    |- indirectDraw.buffer
+    |- offset
+    |- drawCount
+    |- 20
   where Vk        {..} = vk
         Buffers   {..} = buffers
         Constants {..} = constants
@@ -225,12 +236,17 @@ subpassClear vk buffers viewport scissor subpass = do
         Constants {..} = constants
         Font      {..} = font
 
+-- | Clear given area of a color attachment with the given clear color and index.
+-- | Note that this clears the *output* attachments when called in a given subpass.
+
+{-# INLINE clearColorAttachments #-}
 clearColorAttachments
   :: VkCommandBuffer
   -> Area
+  -> (Float, Float, Float, Float)
   -> V.Vector Word32
   -> IO ()
-clearColorAttachments commandBuffer area indices =
+clearColorAttachments commandBuffer area (r, g, b, a) indices =
   withVector attachments
     $ \attachmentCount pAttachments -> withVector clearRects
     $ \rectCount pRects -> vkCmdClearAttachments
@@ -259,7 +275,15 @@ clearColorAttachments commandBuffer area indices =
         clearColor = createVk @VkClearValue
           $ set   @"color"      |* clearColorValue
         clearColorValue = createVk @VkClearColorValue
-          $ setAt @"float32" @0 |* 0
-         &* setAt @"float32" @1 |* 0
-         &* setAt @"float32" @2 |* 0
-         &* setAt @"float32" @3 |* 0
+          $ setAt @"float32" @0 |* r
+         &* setAt @"float32" @1 |* g
+         &* setAt @"float32" @2 |* b
+         &* setAt @"float32" @3 |* a
+
+{-# INLINE blank #-}
+blank :: (Float, Float, Float, Float)
+blank = (0, 0, 0, 0)
+
+{-# INLINE bgColor #-}
+bgColor :: (Float, Float, Float, Float)
+bgColor = (46/255, 52/255, 64/255, 1)

@@ -16,7 +16,6 @@ library
       Data.Tree.Common
       Data.Tree.ByteString
       Data.Tree
-      Highlighter
       Stream
       Utils
       Unsafe.ByteString
@@ -54,7 +53,6 @@ test-suite test
       Data.Lines
       Stream
       Filebuffer
-      Highlighter
       Utils
       Unsafe.ByteString
   hs-source-dirs:

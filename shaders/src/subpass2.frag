@@ -18,14 +18,12 @@ void main() {
  vec2 pos = vert * textureSize(inTexture,0);
 
  vec4 avgColor = 1.0/6.0 * ( textureLod(inTexture, pos - 2.5 * x + 1.5 * y, 0)
-                            + textureLod(inTexture, pos - 1.5 * x - 1.5 * y, 0)
-                            + textureLod(inTexture, pos - 0.5 * x + 2.5 * y, 0)
-                            + textureLod(inTexture, pos + 0.5 * x - 0.5 * y, 0)
-                            + textureLod(inTexture, pos + 1.5 * x + 0.5 * y, 0)
-                            + textureLod(inTexture, pos + 2.5 * x - 0.5 * y, 0)
-                            );
-
-
+                           + textureLod(inTexture, pos - 1.5 * x - 1.5 * y, 0)
+                           + textureLod(inTexture, pos - 0.5 * x + 2.5 * y, 0)
+                           + textureLod(inTexture, pos + 0.5 * x - 0.5 * y, 0)
+                           + textureLod(inTexture, pos + 1.5 * x + 0.5 * y, 0)
+                           + textureLod(inTexture, pos + 2.5 * x - 0.5 * y, 0)
+                           );
 
  outColor = avgColor;
 }
