@@ -23,6 +23,7 @@ cmdRenderPass0 state buffers vk = do
       viewport = mkViewport render
       scissor  = mkScissor render
       cmdDraw    = subpassDraw vk buffers viewport scissor
+      cmdDrawFullscreen = subpassDrawFullscreen vk buffers viewport scissor
       cmdResolve = subpassResolve vk buffers viewport scissor
       nextSubpass = vkCmdNextSubpass
                       |- commandBuffer
@@ -54,19 +55,25 @@ cmdRenderPass0 state buffers vk = do
   -- draw1
   cmdDraw
     |- renderPass0.draw1
-    |- (0, state.instanceNum)
+    |- (20, state.instanceNum - 1)
   nextSubpass
   -- resolve1
   cmdResolve
     |- renderPass0.resolve1
-    |- (0, state.instanceNum)
+    |- (20, state.instanceNum - 1)
   nextSubpass
   -- clear1
   clearAttachments blank [0]
   nextSubpass
   -- draw2
+  cmdDraw
+    |- renderPass0.draw2
+    |- (0, 1)
   nextSubpass
   -- resolve2
+  cmdDraw
+    |- renderPass0.resolve2
+    |- (0, 1)
   nextSubpass
   -- clear2
   clearAttachments blank [0]

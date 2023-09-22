@@ -103,6 +103,49 @@ subpassDraw vk buffers viewport scissor subpass (offset, drawCount) = do
         Constants {..} = constants
         Font      {..} = font
 
+subpassDrawFullscreen
+  :: Vk { font = I, fullscreenBuffer = I, renderPipeline = I, vulkan = I }
+  -> Buffers
+  -> VkViewport
+  -> VkRect2D
+  -> Subpass
+  -> IO ()
+subpassDrawFullscreen vk buffers viewport scissor subpass = do
+  vkCmdBindPipeline
+    |- commandBuffer
+    |- VK_PIPELINE_BIND_POINT_GRAPHICS
+    |- subpass.pipeline.handle
+  with viewport $ vkCmdSetViewport
+                    |- commandBuffer
+                    |- 0
+                    |- 1
+  with scissor $ vkCmdSetScissor
+                   |- commandBuffer
+                   |- 0
+                   |- 1
+  with2 fullscreenBuffer.vertex.buffer 0
+    $ \pVertex ->
+      \pOffset -> vkCmdBindVertexBuffers
+                    |- commandBuffer
+                    |- 0
+                    |- 1
+                    |- pVertex
+                    |- pOffset
+  vkCmdBindIndexBuffer
+    |- commandBuffer
+    |- fullscreenBuffer.index.buffer
+    |- 0
+    |- VK_INDEX_TYPE_UINT32
+  vkCmdDrawIndexed
+    |- commandBuffer
+    |- 6
+    |- 1
+    |- 0
+    |- 0
+    |- 0
+  where Vk        {..} = vk
+        Buffers   {..} = buffers
+
 subpassResolve
   :: Vk { font = I, fullscreenBuffer = I, renderPipeline = I, vulkan = I }
   -> Buffers
@@ -282,6 +325,10 @@ bgColor = (46/255, 52/255, 64/255, 1)
 {-# INLINE bgColorHighlight #-}
 bgColorHighlight :: (Float, Float, Float, Float)
 bgColorHighlight = (59/255, 66/255, 82/255, 1)
+
+{-# INLINE windNonzero #-}
+windNonzero :: (Float, Float, Float, Float)
+windNonzero = (1, 0, 0, 0)
 
 {-# INLINE present2RenderX #-}
 present2RenderX :: Constants -> Float -> Float

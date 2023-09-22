@@ -7,6 +7,8 @@ data-files: fonts/**/*.ttf
 
 executable editor
   main-is: Main.hs
+  other-modules:
+      Options
   hs-source-dirs:
       main
   default-extensions:
@@ -30,6 +32,7 @@ executable editor
     , ghc
     , ghc-prim
     , mmap
+    , optparse-applicative
     , parse-font
     , preprocessor
     , primitive

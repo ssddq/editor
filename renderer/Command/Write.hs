@@ -233,16 +233,23 @@ writeIndirectDraws bufferI bufferD vk = do
                                 , yMax = fromIntegral $ present.height - 10
                                 , xMin = 10
                                 }
-  state <- writeIndirectDrawStream
+  (ptrI', ptrD', state) <- writeFullscreenDraw
+              |- constants
+  --          |- Color 0 0 0 175
+              |- Color 0 0 0 0
+              |- ptrI
+              |- ptrD
+              |- startState
+  state' <- writeIndirectDrawStream
              |- mode
              |- constants
              |- font
-             |- ptrI
-             |- ptrD
-             |- startState
+             |- ptrI'
+             |- ptrD'
+             |- state
              |- toStream stream
-  let stream' = stream.updateVisualLineCount state.lines stream.textBuffer
-  return $ (state, stream')
+  let stream' = stream.updateVisualLineCount state'.lines stream.textBuffer
+  return $ (state', stream')
   where Vk        {..} = vk
         Constants {..} = constants
         Font      {..} = font

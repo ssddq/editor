@@ -20,6 +20,7 @@ import Font       qualified as Font
 import Renderer
 import Shaders
 import Haskell
+import Options
 
 import Data.Text          qualified as T
 import Data.Text.Encoding qualified as T
@@ -32,6 +33,8 @@ import Control.Concurrent
 
 import Data.FileEmbed
 
+import Options.Applicative
+
 import Streaming qualified as S
 import Streaming.Prelude qualified as SP
 
@@ -42,11 +45,12 @@ import System.IO
 -- * main
 
 initializeVulkan
-  :: Font.Font
+  :: Constants
+  -> Font.Font
   -> FilePath
   -> IO Vk { commandPool = I, drawBuffers = I, font = I, fullscreenBuffer = I, renderPipeline = I, signals = I, stream = A Filebuffer, vulkan = I }
-initializeVulkan font file = do
-  initializeVk emptyVk
+initializeVulkan constants font file = do
+  initializeVk (emptyVk constants)
   >>= loadFile file
   >>= createRenderPipeline renderPassShaders
   >>= createIndexedBuffer (Font.bufferWriter font)
@@ -62,10 +66,13 @@ initializeVulkan font file = do
                             )
 
 main :: IO ()
-main = withArgs $ \file -> do
+main = do
+  opts <- execParser options
   setNumCapabilities 8
-  font <- Font.parse_Font <$> Font.loadTables fontFile
-  vk <- initializeVulkan font file
+  font <- case (opts.fontFile) of
+    Just f  -> Font.parse_Font <$> Font.loadTables f
+    Nothing -> Font.parse_Font <$> Font.loadTables fontFile
+  vk <- initializeVulkan opts.constants font opts.file
   SDLRaw.stopTextInput
   mainLoop vk
   return ()

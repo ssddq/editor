@@ -18,7 +18,7 @@
     "release": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-nikIKCCUGO03h3bbNJ8Odo46PRdSx6LdPFlFM25GrnA=",
+        "narHash": "sha256-4HR3kQjTpSxl3675eVrtl4G7Vsb3RUmXFDNZ0xell9Y=",
         "type": "file",
         "url": "https://github.com/ssddq/editor/releases/download/binary/editor"
       },

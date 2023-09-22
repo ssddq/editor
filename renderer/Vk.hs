@@ -113,5 +113,5 @@ generate [d|
            }
   |]
 
-emptyVk :: Null Vk
-emptyVk = createEmpty (Vk defaultConstants Normal)
+emptyVk :: Constants -> Null Vk
+emptyVk constants = createEmpty (Vk constants Normal)

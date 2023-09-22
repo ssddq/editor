@@ -1,4 +1,4 @@
-At the moment, this is mostly a proof-of-concept, and there are few user-facing features. The application has
+At the moment, this is mostly a proof-of-concept, and there are few user-facing features. The program has:
 
 * Basic modal editing: `i` to enter insert mode, `Esc` to leave it
 
@@ -8,7 +8,13 @@ At the moment, this is mostly a proof-of-concept, and there are few user-facing 
 
 * Syntax highlighting: currently, there is a `flatparse`-based syntax highlighter for Haskell source code. However, there is no filetype detection as yet, so the parser will be applied to any file you open.
 
-There are currently no configurable settings: you can only provide a file as an argument.
+The program requires a file as an argument, and can be passed a small number of optional arguments:
+
+* `--render INTxINT` specifies the pixel dimensions of the render canvas as `<height>x<width>`. On a device with memory or performance constraints (e.g. if you have integrated graphics), you may wish to set this to a lower value. On a high DPI display (e.g. most modern laptops), you can likely decrease the render resolution significantly without any perceptible impact in quality.
+
+* `--size FLOAT` and `--dpi FLOAT` can be used to specify the font size in points and display DPI respectively. Internally, these are only ever used in tandem -- the only reason you may wish to set the DPI is to ensure that the font size (which is a physical measure) can be properly converted to a pixel size.
+
+* `--font FILE` can be used to provide a TrueType (`.ttf`) font source file. Note that the TTF parser is *not* currently complete, and likely will not be for some time. I have tested a small number of fixed-width and proportional fonts without issue, but (in particular) any font that does not provide a format 4 `cmap` encoding table will cause the program to crash immediately.
 
 If you would like to try it on an x86-64 Linux distribution:
 

@@ -72,9 +72,12 @@ hsParser = FileParser
 comment :: Parser e ()
 comment = (inlineComment <|> multilineComment)
 
+-- | We must require at least 7 characters before we fallback to not coloring the string,
+-- | since we may have otherwise hit an initial chunk of a keyword sitting at a boundary.
+
 {-# INLINE fallback #-}
 fallback :: Parser e Char
-fallback = anyChar
+fallback = ensure 7 *> anyChar
 
 {-# INLINE guard #-}
 guard :: Parser e ()
