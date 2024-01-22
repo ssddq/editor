@@ -48,8 +48,8 @@
       common = cabal2nix "common" ./common {};
 
       preprocessor = cabal2nix "preprocessor" ./tools/preprocessor
-        { inherit parser;
-          inherit formatter;
+        { inherit formatter;
+          inherit parser;
         };
 
       parser = cabal2nix "parser" ./tools/parser {};
@@ -77,8 +77,8 @@
 
       renderer = cabal2nix "renderer" ./renderer
         { inherit common;
-          inherit vma;
           inherit preprocessor;
+          inherit vma;
         };
   in
   { packages.${system}.default = pkgs.stdenv.mkDerivation
@@ -90,29 +90,29 @@
       nativeBuildInputs = [ pkgs.autoPatchelfHook ];
 
       buildInputs = with pkgs;
-      [ glibc
-        libstdcxx5
-        vulkan-loader
-        SDL2
-        gmp
-        libffi
+      [ bzip2
         elfutils
         gcc
+        glibc
+        gmp
+        libffi
+        libstdcxx5
+        SDL2
+        vulkan-loader
+        xorg.libX11
+        xorg.libXau
+        xorg.libxcb
+        xorg.libXcursor
+        xorg.libXdmcp
+        xorg.libXext
+        xorg.libXfixes
+        xorg.libXi
+        xorg.libXrandr
+        xorg.libXrender
+        xorg.libXScrnSaver
+        xz
         zlib
         zstd
-        xz
-        bzip2
-        xorg.libxcb
-        xorg.libX11
-        xorg.libXext
-        xorg.libXcursor
-        xorg.libXi
-        xorg.libXfixes
-        xorg.libXrandr
-        xorg.libXScrnSaver
-        xorg.libXau
-        xorg.libXdmcp
-        xorg.libXrender
       ];
 
       installPhase =
@@ -122,13 +122,11 @@
     };
 
     editor = cabal2nix "editor" ./.
-    { inherit vma;
-      inherit shaders;
+    { inherit filebuffer;
       inherit parse-font;
       inherit preprocessor;
-      inherit filebuffer;
-      inherit common;
       inherit renderer;
+      inherit shaders;
       inherit syntax;
     };
 

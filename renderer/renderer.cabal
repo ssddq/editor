@@ -43,16 +43,16 @@ library
   hs-source-dirs:
       .
   default-extensions:
-      OverloadedRecordDot
-      TypeApplications
+      DataKinds
       DisambiguateRecordFields
       FlexibleContexts
-      RankNTypes
-      DataKinds
+      ImportQualifiedPost
       MultiWayIf
       NamedFieldPuns
-      ImportQualifiedPost
+      OverloadedRecordDot
+      RankNTypes
       RecordWildCards
+      TypeApplications
   other-extensions:
       TemplateHaskell
   build-tool-depends:

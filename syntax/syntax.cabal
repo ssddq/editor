@@ -5,16 +5,13 @@ version:        0.0.0
 build-type:     Simple
 
 library
-  exposed-modules:
-      Haskell
-  hs-source-dirs:
-      .
-  default-extensions:
-      ImportQualifiedPost
   build-depends:
-      base
+    , base
     , common
     , flatparse
-    , ghc-prim
-    , vector
+  default-extensions:
+      ImportQualifiedPost
   default-language: Haskell2010
+  exposed-modules:
+      Haskell
+  hs-source-dirs: .

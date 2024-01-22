@@ -4,50 +4,46 @@ name:           vma
 version:        0.0.0
 build-type:     Custom
 extra-source-files:
-    VulkanMemoryAllocator/include/vk_mem_alloc.h
-    extra-headers/vk_extra.h
     hsc/VkExtra.hsc
     hsc/VMA.hsc
+    VulkanMemoryAllocator/include/vk_mem_alloc.h
+    extra-headers/vk_extra.h
 
 custom-setup
   setup-depends:
-      Cabal
     , attoparsec
     , base
     , bytestring
+    , Cabal
     , hsc-gen
     , process
 
 library
+  build-depends:
+    , attoparsec
+    , base
+    , utf8-string
+    , vulkan-api
+  cxx-options: 
+      -std=c++14
+  cxx-sources:
+      hsc/lib.cpp
+  default-extensions:
+      ImportQualifiedPost
+  default-language: Haskell2010
   exposed-modules:
       VkExtra
       VMA
-  other-modules:
-      Gen
-      Paths_vma
-  autogen-modules:
-      Paths_vma
-  hs-source-dirs:
-      hsc-gen
-      hsc
-  default-extensions:
-      ImportQualifiedPost
-  ghc-options: -optcxx -std=c++14
-  cxx-options: -std=c++14
-  include-dirs:
-      VulkanMemoryAllocator/include
-  cxx-sources:
-      hsc/lib.cpp
   extra-libraries:
       stdc++
       vulkan
-  build-depends:
-      attoparsec
-    , base
-    , bytestring
-    , haskell-src-meta
-    , template-haskell
-    , th-abstraction
-    , utf8-string
-    , vulkan-api
-  default-language: Haskell2010
+  ghc-options: 
+      -optcxx 
+      -std=c++14
+  hs-source-dirs:
+      hsc-gen
+      hsc
+  include-dirs:
+      VulkanMemoryAllocator/include
+  other-modules:
+      Gen

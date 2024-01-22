@@ -4,74 +4,46 @@ name:           filebuffer
 version:        0.0.0
 build-type:     Simple
 
-library
-  exposed-modules:
-      Filebuffer
-  other-modules:
-      Data.Vector.Dynamic
-      Data.Vector.Async
-      Data.Edits
-      Data.Lines
-      Data.Tree.Lines
-      Data.Tree.Common
-      Data.Tree.ByteString
-      Data.Tree
-      Stream
-      Utils
-      Unsafe.ByteString
-  hs-source-dirs:
-      .
-  default-extensions:
-      ImportQualifiedPost
+common shared
   build-depends:
-      async
-    , attoparsec
-    , array
     , base
     , bytestring
     , common
     , containers
     , flatparse
-    , ghc
     , ghc-prim
     , streaming
-    , timeit
     , vector
-  default-language: Haskell2010
-
-test-suite test
-  type: exitcode-stdio-1.0
-  main-is: Test.hs
-  other-modules:
-      Data.Vector.Dynamic
-      Data.Vector.Async
-      Data.Tree.Lines
-      Data.Tree.Common
-      Data.Tree.ByteString
-      Data.Tree
-      Data.Edits
-      Data.Lines
-      Stream
-      Filebuffer
-      Utils
-      Unsafe.ByteString
-  hs-source-dirs:
-      .
-      test
   default-extensions:
       ImportQualifiedPost
-  ghc-options: -main-is Test
-  build-depends:
-      hspec
-    , hspec-expectations
-    , async
-    , attoparsec
-    , base
-    , bytestring
-    , common
-    , containers
-    , ghc
-    , ghc-prim
-    , streaming
-    , vector
   default-language: Haskell2010
+  hs-source-dirs: .
+  other-modules:
+      Data.Edits
+      Data.Lines
+      Data.Tree
+      Data.Tree.ByteString
+      Data.Tree.Common
+      Data.Tree.Lines
+      Data.Vector.Async
+      Data.Vector.Dynamic
+      Stream
+      Unsafe.ByteString
+      Utils
+
+library
+  import: shared
+  exposed-modules:
+      Filebuffer
+
+test-suite test
+  import: shared
+  build-depends:
+    , hspec
+  ghc-options: -main-is Test
+  hs-source-dirs:
+      test
+  main-is: Test.hs
+  other-modules:
+      Filebuffer
+  type: exitcode-stdio-1.0
