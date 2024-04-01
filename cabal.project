@@ -38,3 +38,5 @@ package preprocessor
 package vma
   ghc-options:
     -Wno-incomplete-patterns
+
+allow-newer: sdl2:bytestring

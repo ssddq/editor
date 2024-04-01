@@ -211,7 +211,7 @@ writeIndirectDrawStream mode constants font = loop
           result <- writeCursorDraw (cursor mode) font pDrawCmds pDrawData state
           let (,,) pDrawCmds' pDrawData' state' = result
           loop pDrawCmds' pDrawData' state' stream
-        loop pDrawCmds pDrawData state (S.Step (ColorChange color S.:> stream)) = loop pDrawCmds pDrawData (state { color = color }) stream
+        loop pDrawCmds pDrawData state (S.Step (ColorChange color S.:> stream)) = loop pDrawCmds pDrawData (state { color }) stream
         loop pDrawCmds pDrawData state (S.Step (Char c S.:> stream)) = do
           let char = toEnum $ fromIntegral c
           result <- writeCharacterDraw char constants font pDrawCmds pDrawData state

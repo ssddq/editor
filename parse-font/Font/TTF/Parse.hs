@@ -20,8 +20,9 @@ import Data.Bits
 import Data.Int
 import Data.Word
 
-import Data.Foldable hiding (length)
-import Data.List     (group, head, sort)
+import Data.Foldable      hiding (length)
+import Data.List          (sort)
+import Data.List.NonEmpty (group, head)
 
 import Data.ByteString qualified as Strict
 import Data.Vector     qualified as V
@@ -200,8 +201,8 @@ parse_cmap rawBS = do
   numTables       <- getWord16be
   encodingRecords <- V.replicateM (fromIntegral numTables)
                                   (parse_encodingRecord  )
-  let (uniqueSubtables :: [Word32]) = ( fmap Data.List.head
-                                      . Data.List.group
+  let (uniqueSubtables :: [Word32]) = ( fmap Data.List.NonEmpty.head
+                                      . Data.List.NonEmpty.group
                                       . sort
                                       . fmap subtableOffset
                                       . toList

@@ -17,6 +17,8 @@ import Language.Haskell.TH.Syntax
 
 deriving instance Lift (TyVarBndr ())
 deriving instance Lift (TyVarBndr Specificity)
+deriving instance Lift (BndrVis)
+deriving instance Lift (TyVarBndr BndrVis)
 deriving instance Lift Name
 deriving instance Lift TyLit
 deriving instance Lift OccName
@@ -27,6 +29,7 @@ deriving instance Lift PkgName
 deriving instance Lift Specificity
 deriving instance Lift Type
 
+
 appendToFunctionName
   :: Name
   -> Dec
@@ -36,6 +39,7 @@ appendToFunctionName name (SigD fname ty)               = SigD (mkName $ nameBas
 appendToFunctionName ____ dec                           = dec
 
 -- | Generates auxiliary functions for a collection of data declarations in a TH splice.
+
 generate
   :: (Quote m)
   => m [Dec]
@@ -45,6 +49,7 @@ generate decsQ = do
   generateReplaceAll decQ
 
 -- | Generates auxiliary functions for a data declaration.
+
 generateReplace
   :: (Quote m)
   => Dec
@@ -55,6 +60,7 @@ generateReplace (DataD _ tyName tyVars _ _ _) = liftM (fmap (appendToFunctionNam
 generateReplace _dec = error "generateReplace called on a declaration that was not a data declaration"
 
 -- | Generates auxiliary functions for a list of data declarations.
+
 generateReplaceAll
   :: (Quote m)
   => [Dec]
@@ -69,6 +75,7 @@ generateReplaceAll (dec : decs) = do
   return $ dec : rest
 
 -- | Quantifies over all unbound type variables in a signature.
+
 quantify
   :: (Quote m)
   => m Type
@@ -85,6 +92,7 @@ quantify = fmap quantifyType
 -- |
 -- | This seems easier than simply discarding the original quantifiers,
 -- | since those might include kind signatures.
+
 quantifyExcept
   :: (Quote m)
   => [String]
@@ -97,6 +105,7 @@ quantifyExcept names ty = do
     other                      -> return $ other
 
 -- | Removes a given list of quantified variables from the quantification binding.
+
 removeTyVarBndrs
   :: [String]
   -> [TyVarBndr flag]

@@ -5,6 +5,8 @@ import Common
 import Data.ByteString          qualified as Strict
 import Data.ByteString.Internal qualified as Strict
 
+import Foreign.Marshal.Utils
+
 import GHC.ForeignPtr
 
 import System.IO.Unsafe
@@ -32,7 +34,7 @@ unsafeInsertByteString
 unsafeInsertByteString (Strict.BS insertFp insertLen) offset (Strict.BS targetFp targetLen) = unsafeDupablePerformIO $ do
   let memcpy target source length = unsafeWithForeignPtr target
                                   $ \t -> unsafeWithForeignPtr source
-                                  $ \s -> Strict.memcpy t s length
+                                  $ \s -> copyBytes t s length
       totalLen = insertLen + targetLen
   if (totalLen <= blockSizeLimit) then
     do let len = totalLen
@@ -129,7 +131,7 @@ unsafeRemoveByteString offset count (Strict.BS stringFp stringLen) = unsafeDupab
   let len = stringLen - count
       memcpy target source length = unsafeWithForeignPtr target
                                   $ \t -> unsafeWithForeignPtr source
-                                  $ \s -> Strict.memcpy t s length
+                                  $ \s -> copyBytes t s length
   fp <- Strict.mallocByteString len
   memcpy
     |- fp

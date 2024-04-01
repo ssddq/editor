@@ -19,7 +19,7 @@
 
       pkgs = nixpkgs.legacyPackages.${system};
 
-      haskellPackages = pkgs.haskell.packages.ghc962;
+      haskellPackages = pkgs.haskell.packages.ghc98;
 
       alex  = haskellPackages.alex;
       happy = haskellPackages.happy;
@@ -142,11 +142,6 @@
         haskellPackages.ghcid
         haskellPackages.cabal-install
 
-        pkgs.vulkan-loader
-        pkgs.vulkan-headers
-
-        pkgs.SDL2
-
         pkgs.stylish-haskell
 
         alex
@@ -155,8 +150,16 @@
         formatter
       ];
 
+      nativeBuildInputs = 
+      [ pkgs.pkg-config 
 
-      inputsFrom = [ self.editor.env ];
+        pkgs.shaderc
+
+        pkgs.SDL2
+
+        pkgs.vulkan-loader
+        pkgs.vulkan-headers
+      ];
     };
 
     devShells.${system} =

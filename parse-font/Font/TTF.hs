@@ -1,3 +1,5 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+
 module Font.TTF
   ( module Font.TTF.Parse
   , module Font.TTF.Patterns

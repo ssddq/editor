@@ -14,6 +14,7 @@
 #define VMA_MEMORY_PRIORITY 1
 #define VMA_EXTERNAL_MEMORY 1
 
+#include <cstdio>
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
