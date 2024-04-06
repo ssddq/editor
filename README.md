@@ -16,26 +16,19 @@ The program requires a file as an argument, and can be passed a small number of 
 
 * `--font FILE` can be used to provide a TrueType (`.ttf`) font source file. Note that the TTF parser is *not* currently complete, and likely will not be for some time. I have tested a small number of fixed-width and proportional fonts without issue, but (in particular) any font that does not provide a format 4 `cmap` encoding table will cause the program to crash immediately.
 
-If you would like to try it on an x86-64 Linux distribution:
+## Building
 
-* On NixOS, you can simply run `nix run github:ssddq/editor`. If you see something about `IOT` or a segfault, check to make sure you have drivers for your GPU (e.g. `amdgpu`, `mesa`) and `vulkan-loader` installed at the system-level (i.e. in your `configuration.nix`).
-
-* Outside of NixOS, you can still run `nix run github:ssddq/editor` using the nix package manager, but you will need a wrapper like [NixGL](https://github.com/guibou/nixGL).
-
-* You can download the binary under releases and manually patch the interpreter. For example, on Arch Linux you can (probably) just run `ldd editor` to see which libraries you're missing, install those and then run:
-
-        patchelf --remove-rpath editor
-        patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 editor
-        chmod +x editor
-
-  If this works for you, it's probably the fastest approach on a non-NixOS system.
-
-Failing that, you can still build from source: clone the repository *recursively* with
+To build from source, you can simply clone the repository *recursively* with
 
     git clone --recurse-submodules https://github.com/ssddq/editor
 
 and build with `cabal build`. If you have Nix installed, `nix develop` should provide a shell with the required dependencies.
 
+A prebuilt binary for x86-64 Linux distributions is also automatically generated at <https://github.com/ssddq/editor-release>, which you can run with
+    
+    nix run github:ssddq/editor-release
+
+This is likely to require additional steps if you are not on NixOS; please visit that repository for more instructions.
 
 ## Technical features
 
@@ -45,7 +38,7 @@ The technical points that may be of interest:
 
 * Every frame, the relevant portion of the file is read from the disk and merged with the editor state into (essentially) a `Stream (Of Char) IO ()`. The stream is terminated as soon as the renderer has consumed enough characters to fill the given render area.
 
-* Syntax highlighting is provided by streaming the results of a stateful `flatparse` parser `state -> Parser e (Color, State)`. The parser is fed chunks of bytestrings with some minimal length (currently 512), and the results are streamed as they are produced.
+* Syntax highlighting is provided by streaming the results of a stateful `flatparse` parser with signature `state -> Parser e (Color, state)`. The parser is fed chunks of bytestrings with some minimal length (currently 512), and the results are streamed as they are produced.
 
   Parsers manage their own internal state (which may be trivial), and can request a limited amount of context (currently 512 bytes) so that they can begin parsing earlier than the start of the render area.
 

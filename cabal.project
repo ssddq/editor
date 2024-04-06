@@ -40,3 +40,6 @@ package vma
     -Wno-incomplete-patterns
 
 allow-newer: sdl2:bytestring
+
+package editor
+  split-sections: True

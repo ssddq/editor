@@ -15,22 +15,9 @@
         "type": "github"
       }
     },
-    "release": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-4HR3kQjTpSxl3675eVrtl4G7Vsb3RUmXFDNZ0xell9Y=",
-        "type": "file",
-        "url": "https://github.com/ssddq/editor/releases/download/binary/editor"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://github.com/ssddq/editor/releases/download/binary/editor"
-      }
-    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "release": "release",
         "vma-lib": "vma-lib"
       }
     },
