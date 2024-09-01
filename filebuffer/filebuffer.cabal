@@ -40,10 +40,14 @@ test-suite test
   import: shared
   build-depends:
     , hspec
+    , knob
+    , QuickCheck
+    , quickcheck-instances
   ghc-options: -main-is Test
   hs-source-dirs:
       test
   main-is: Test.hs
   other-modules:
-      Filebuffer
+      Model
+      Unit
   type: exitcode-stdio-1.0

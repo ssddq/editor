@@ -14,9 +14,10 @@ module Stream where
 import Common
 import Utils
 
-import Control.Monad.IO.Class
 import GHC.ForeignPtr
-import System.IO
+import GHC.IO.Handle
+
+import Control.Monad.IO.Class
 
 import Data.Word
 
@@ -122,8 +123,8 @@ dropChars = loop
           S.Return ()          -> S.Return ()
           S.Effect m           -> S.Effect (fmap (loop n color) m)
           S.Step (b S.:> rest) -> case b of
-            Char{}   -> loop (n - 1) color rest
-            Cursor{} -> loop n color rest
+            Char{}             -> loop (n - 1) color rest
+            Cursor{}           -> loop n color rest
             ColorChange color' -> loop n color' rest
 
 {-# INLINE injectAfter #-}
@@ -272,12 +273,18 @@ matchForwards
   -> MatchState
 matchForwards !start !flag !target !state !string = Strict.foldl' (matchChar start flag target) state string
 
+-- | Scans a handle for newline characters,
+-- | returning a tree of line numbers.
+-- |
+-- | The result is evaluted eagerly but asynchronously,
+-- | which means that `scanLines` must be given a different
+-- | handle than the one used by the main thread.
+
 {-# INLINE scanLines #-}
 scanLines
-  :: FilePath
+  :: Handle
   -> IO (Tree Lines)
-scanLines path = do
-  fmap (Tree.new . Base) $ Async.generateNewlines path
+scanLines asyncHandle = fmap (Tree.new . Base) $ Async.generateNewlines asyncHandle
 
 {-# INLINE search #-}
 search

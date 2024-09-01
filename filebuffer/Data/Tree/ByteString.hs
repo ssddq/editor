@@ -40,8 +40,8 @@ insertByteTree !string !offset !tree = makeBlack $ insert string offset tree
         LT -> balance (index + Strict.length a) color (insert a offset left) node (right                 )
         GT -> balance (index                  ) color (left                ) node (insert a offset' right)
               where offset' = offset - index - Strict.length node
-        EQ -> prependRight node'' . prependRight node''' $ balance index color left node' right
-              where (node', node'', node''') = insertSegment a (offset - index) node
+        EQ -> prependRight node'' $ balance index color left node' right
+              where (node', node'') = insertSegment a (offset - index) node
     insert a _ nil@(Nil _) =
       if (Strict.null a) then
         nil
@@ -59,8 +59,6 @@ removeByteTree
   -> Tree Strict.ByteString
 removeByteTree !tree !offset !count = remove offset count tree
   where
-    start = offset
-    stop = offset + count
     remove :: Int -> Int -> Tree Strict.ByteString -> Tree Strict.ByteString
     remove _ 0 tree = tree
     remove _ _ nil@(Nil _) = nil
@@ -79,4 +77,6 @@ removeByteTree !tree !offset !count = remove offset count tree
                 prependRight node'' $ resolve $ Tree index color left node' right
         GT -> resolve $ Tree index color left node (remove (offset - index - Strict.length node) count right)
       where right_count = max 0 $ stop - index - Strict.length node
-            (node', node'') = removeSegment (offset - index) (min count $ Strict.length node - offset - index) node
+            (node', node'') = removeSegment (offset - index) (min count $ Strict.length node - offset + index) node
+            start = offset
+            stop = offset + count

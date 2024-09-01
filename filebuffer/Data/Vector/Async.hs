@@ -197,13 +197,13 @@ generate writer = do
 
 {-# INLINE generateNewlines #-}
 generateNewlines
-  :: FilePath
+  :: Handle
   -> IO Vector
-generateNewlines path = do
+generateNewlines handle = do
   v <- stToIO $ Dynamic.new 4096
   consumedTVar <- newTVarIO 0
   vectorTVar   <- newTVarIO <=< stToIO $ Dynamic.append v (-1)
-  forkIO $ scanNewlines path consumedTVar vectorTVar
+  forkIO $ scanNewlines handle consumedTVar vectorTVar
   let modifier = 0
       start  = 0
       span = maxBound
@@ -482,21 +482,19 @@ inVectorRange n Vector{ modifier, start, span, consumedTVar, vectorTVar } = unsa
 
 {-# INLINE scanNewlines #-}
 scanNewlines
-  :: FilePath
+  :: Handle
   -> TVar Int
   -> TVar (Dynamic.Vector RealWorld Int)
   -> IO ()
-scanNewlines !path !consumedTVar !vectorTVar = do
-  handle <- openFile path ReadMode
-  loop 0 handle
-  where loop :: Int -> Handle -> IO ()
-        loop position handle = do
+scanNewlines !handle !consumedTVar !vectorTVar = loop 0
+  where loop :: Int -> IO ()
+        loop position = do
           chunk  <- Strict.hGetSome handle 32768
           if (Strict.null chunk) then
             atomically $ writeTVar consumedTVar maxBound
           else do
             scanNewlinesChunk position (position + Strict.length chunk) chunk consumedTVar vectorTVar
-            loop (position + Strict.length chunk) handle
+            loop (position + Strict.length chunk)
 
 {-# INLINE scanNewlinesChunk #-}
 scanNewlinesChunk

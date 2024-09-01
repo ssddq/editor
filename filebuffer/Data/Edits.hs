@@ -228,12 +228,13 @@ insertPatches !string !(Position base offset) !leaf@Leaf{prefix, delete, insert,
 deletePatches
   :: Position
   -> Int
+  -> Int
   -> Edits
-  -> Edits
-deletePatches !position !count !edits = case (deleted 0) of
-  Just    edits' -> edits'
-  Nothing        -> noEdits
-  where (deleted, _) = startDelete edits $ DeleteState position count 0
+  -> (Edits, Position)
+deletePatches !position !count !limit !edits = case (deleted 0) of
+  Just    edits' -> (edits' , endState.newCursor)
+  Nothing        -> (noEdits, endState.newCursor)
+  where (deleted, endState) = startDelete edits $ DeleteState position count 0 limit position
 
 {-# INLINE finishDelete #-}
 finishDelete
@@ -246,45 +247,56 @@ finishDelete !state !Branch{left, right} =
       |- right'
   , state''
   )
-  where (left' , state' ) = if (state.remaining > 0) then
+  where (left' , state' ) = if (state.remaining  > 0) then
                               finishDelete state left
                             else
-                              (Just left, state)
+                              (Just left , state )
         (right', state'') = if (state'.remaining > 0) then
-                              finishDelete state' right else
+                              finishDelete state' right
+                            else
                               (Just right, state')
 finishDelete !state !leaf@Leaf{prefix, delete, insert, length} = case (compare stop prefix) of
   LT -> ( Just leaf
-        , state { remaining = 0
-                , position  = Position (prefix + 1) 0
-                }
+        , state
+            { remaining = 0
+            , position  = Position (prefix + 1) 0
+            }
         )
   EQ -> case (length) of
           0 -> ( Nothing
-               , state { remaining = 0
-                       , position  = Position (prefix + 1) 0
-                       , extras    = extras + delete
-               }
+               , state
+                   { remaining = 0
+                   , position  = Position (prefix + 1) 0
+                   , extras    = extras + delete
+                   }
                )
           _ -> ( Just leaf
-               , state { remaining = 0
-                       , position  = Position (prefix + 1) 0
-                       }
+               , state
+                   { remaining = 0
+                   , position  = Position (prefix + 1) 0
+                   }
                )
-  _  -> if (stop <= end ) then
-          ( Just $ Leaf prefix delete (Tree.removeByteTree insert 0 count) (length - count)
-          , state { remaining = 0
-                  , position  = Position (prefix + 1) 0
-                  , extras    = extras - count
-                  }
-          )
-       else
-          ( Nothing
-          , state { remaining = max 0 $ stop - end + delete - 1
-                  , position  = Position (prefix + 1) 0
-                  , extras    = extras + delete - length
-                  }
-          )
+  GT -> if (stop <= end) then
+           ( Just Leaf
+               { prefix
+               , delete
+               , insert = Tree.removeByteTree insert 0 count
+               , length = length - count
+               }
+           , state
+               { remaining = 0
+               , position  = Position (prefix + 1) 0
+               , extras    = extras - count
+               }
+           )
+        else
+           ( Nothing
+           , state
+               { remaining = max 0 $ stop - end + delete - 1
+               , position  = Position (prefix + 1) 0
+               , extras    = extras + delete - length
+               }
+           )
   where position  = state.position.base
         remaining = state.remaining
         extras    = state.extras
@@ -301,7 +313,7 @@ startDelete !branch@Branch{prefix, switch, left, right} !state = case (inLeftRig
   InLeft -> ( \n -> naiveJoinMaybe
                       |- left' (n + state''.extras)
                       |- right'
-            , state''
+            , state'' { newCursor = state'.newCursor }
             )
             where (left' , state' ) = startDelete left state
                   (right', state'') = if (state'.remaining > 0) then
@@ -317,58 +329,107 @@ startDelete !branch@Branch{prefix, switch, left, right} !state = case (inLeftRig
   _ | base > prefix ->
         ( \n -> naiveJoinMaybe
                   |- Just branch
-                  |- Just (Leaf base (remaining + n) (Nil Black) 0)
-        , state { position  = Position (base + 1) 0
-                , remaining = remaining - 1
-                }
+                  |- Just Leaf
+                       { prefix = base
+                       , delete = min (state.limit - base) (remaining + n)
+                       , insert = Nil Black
+                       , length = 0
+                       }
+        , state
+            { position  = Position (base + 1) 0
+            , remaining = remaining - 1
+            , newCursor = Position base offset
+            }
         )
     | otherwise ->
         ( \n -> naiveJoinMaybe
-                  |- Just (Leaf base (remaining + state'.extras + n) (Nil Black) 0)
+                  |- Just Leaf
+                       { prefix = base
+                       , delete = min (state.limit - base) (remaining + state'.extras + n)
+                       , insert = Nil Black
+                       , length = 0
+                       }
                   |- branch'
-        , state' { extras = 0 }
+        , state' { extras    = 0
+                 , newCursor = Position base offset
+                 }
         )
         where (branch', state') = finishDelete
-                                    |- state { position  = Position (base + 1) 0
-                                             , remaining = remaining - 1
-                                             }
+                                    |- state
+                                         { position  = Position (base + 1) 0
+                                         , remaining = remaining - 1
+                                         }
                                     |- branch
   where base      = state.position.base
+        offset    = state.position.offset
         remaining = state.remaining
 startDelete leaf@Leaf{prefix, delete, insert, length} state =
   case (compare base prefix) of
     LT -> ( \n -> naiveJoinMaybe
-                    |- Just (Leaf base (remaining + state'.extras + n) (Nil Black) 0)
+                    |- Just Leaf
+                         { prefix = base
+                         , delete = min (state.limit - base) (remaining + state'.extras + n)
+                         , insert = Nil Black
+                         , length = 0
+                         }
                     |- leaf'
-          , state' { extras = 0 }
+          , state'
+              { extras    = 0
+              , newCursor = Position base offset
+              }
           )
           where (leaf', state') = finishDelete state leaf
     GT | prefix + delete < base ->
             ( \n -> naiveJoinMaybe
                       |- Just leaf
-                      |- Just (Leaf base (remaining + n) (Nil Black) 0)
-            , state { position  = Position (base + 1) 0
-                    , remaining = remaining - 1
-                    }
+                      |- Just Leaf
+                           { prefix = base
+                           , delete = min (state.limit - base) (remaining + n)
+                           , insert = Nil Black
+                           , length = 0
+                           }
+            , state
+                { position  = Position (base + 1) 0
+                , remaining = remaining - 1
+                , newCursor = Position base offset
+                }
             )
        | otherwise ->
-            ( \n -> Just $ Leaf prefix (n + delete + remaining) insert length
-            , state { position  = Position (base + 1) 0
-                    , remaining = remaining - 1 + (prefix + delete - base)
-                    }
+            ( \n -> Just Leaf
+                      { prefix
+                      , delete = min (state.limit - prefix) (n + delete + remaining)
+                      , insert
+                      , length
+                      }
+            , state
+                { position  = Position (base + 1) 0
+                , remaining = remaining - 1 + (prefix + delete - base)
+                , newCursor = Position prefix 0
+                }
             )
     EQ | offset + remaining < length ->
-            ( \n -> Just $ Leaf base (n + delete) (Tree.removeByteTree insert offset remaining) (length - remaining)
-            , state { position  = Position (base + 1) 0
-                    , remaining = 0
-                    }
+            ( \n -> Just Leaf
+                      { prefix = base
+                      , delete = min (state.limit - base) (n + delete)
+                      , insert = Tree.removeByteTree insert offset remaining
+                      , length = length - remaining
+                      }
+            , state
+                { position  = Position (base + 1) 0
+                , remaining = 0
+                , newCursor = Position base offset
+                }
             )
        | otherwise ->
-            let removed = length - offset
-            in
-            ( \n -> Just $ Leaf base (n + delete + remaining - removed) (Tree.removeByteTree insert offset removed) (offset)
+            ( \n -> Just Leaf
+                      { prefix = base
+                      , delete = min (state.limit - base) (n + delete + remaining - length + offset)
+                      , insert = Tree.removeByteTree insert offset $ length - offset
+                      , length = offset
+                      }
             , state { position  = Position (base + 1) 0
-                    , remaining = remaining + delete - removed - 1
+                    , remaining = remaining + delete - length + offset - 1
+                    , newCursor = Position base offset
                     }
             )
   where position  = state.position

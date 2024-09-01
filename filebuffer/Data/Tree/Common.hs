@@ -116,10 +116,9 @@ pattern Black :: Color
 pattern Red :: Color
 pattern Red = 0
 
--- | the normal implementation of the following balance operations is that the original root is black, and the resulting root is red.
+-- | The normal implementation of the following balance operations is that the original root is black, and the resulting root is red.
 -- | to extend this to cases where the original root is k-black for k > 1, note that this will simply blacken the resulting root color k stages.
---
-
+-- |
 -- | A priori, there is a worry here that you may inadvertently force the length of the tail when rebalancing;
 -- | but since the tail is always the rightmost node in the tree, note that it can never be `x` or `y` in any of the cases below.
 -- | Fortunately, `x` and `y` are the only nodes whose lengths we force.

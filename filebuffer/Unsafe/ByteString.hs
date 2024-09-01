@@ -7,6 +7,7 @@ import Data.ByteString.Internal qualified as Strict
 
 import Foreign.Marshal.Utils
 
+import Data.Word
 import GHC.ForeignPtr
 
 import System.IO.Unsafe
@@ -21,6 +22,16 @@ import System.IO.Unsafe
 blockSizeLimit :: Int
 blockSizeLimit = 1024
 
+{-# INLINE memcpy #-}
+memcpy
+  :: ForeignPtr Word8
+  -> ForeignPtr Word8
+  -> Int
+  -> IO ()
+memcpy target source length = unsafeWithForeignPtr target $ \t ->
+                              unsafeWithForeignPtr source $ \s ->
+                              copyBytes t s length
+
 -- | This function is very unsafe!
 -- | Inserts one bytestring into another at the given offset,
 -- | returning overflow if the resulting bytestring exceeds blockSizeLimit.
@@ -30,12 +41,9 @@ unsafeInsertByteString
   :: Strict.ByteString
   -> Int
   -> Strict.ByteString
-  -> (Strict.ByteString, Strict.ByteString, Strict.ByteString)
+  -> (Strict.ByteString, Strict.ByteString)
 unsafeInsertByteString (Strict.BS insertFp insertLen) offset (Strict.BS targetFp targetLen) = unsafeDupablePerformIO $ do
-  let memcpy target source length = unsafeWithForeignPtr target
-                                  $ \t -> unsafeWithForeignPtr source
-                                  $ \s -> copyBytes t s length
-      totalLen = insertLen + targetLen
+  let totalLen = insertLen + targetLen
   if (totalLen <= blockSizeLimit) then
     do let len = totalLen
        fp <- Strict.mallocByteString len
@@ -51,15 +59,15 @@ unsafeInsertByteString (Strict.BS insertFp insertLen) offset (Strict.BS targetFp
          |- fp `plusForeignPtr` (offset + insertLen)
          |- targetFp `plusForeignPtr` offset
          |- targetLen - offset
-       return $ (Strict.BS fp len, Strict.empty, Strict.empty)
+       return $ (Strict.BS fp len, Strict.empty)
   else
     do let len1 = div totalLen 2
            len2 = totalLen - len1
            insertEnd = offset + insertLen
        fp1 <- Strict.mallocByteString len1
        fp2 <- Strict.mallocByteString len2
-       if (offset < len1) then
-         if (insertEnd > len1) then
+       if (offset <= len1) then
+         if (insertEnd >= len1) then
            do memcpy
                 |- fp1
                 |- targetFp
@@ -69,7 +77,7 @@ unsafeInsertByteString (Strict.BS insertFp insertLen) offset (Strict.BS targetFp
                 |- fp1 `plusForeignPtr` offset
                 |- insertFp
                 |- a
-              let b = insertEnd - len1
+              let b = insertLen - a
               memcpy
                 |- fp2
                 |- insertFp `plusForeignPtr` a
@@ -94,7 +102,7 @@ unsafeInsertByteString (Strict.BS insertFp insertLen) offset (Strict.BS targetFp
                 |- a
               memcpy
                 |- fp2
-                |- targetFp `plusForeignPtr` a
+                |- targetFp `plusForeignPtr` (len1 - insertLen)
                 |- len2
        else
          do memcpy
@@ -111,10 +119,10 @@ unsafeInsertByteString (Strict.BS insertFp insertLen) offset (Strict.BS targetFp
               |- insertFp
               |- insertLen
             memcpy
-              |- fp2 `plusForeignPtr` (targetLen - offset)
+              |- fp2 `plusForeignPtr` (a + insertLen)
               |- targetFp `plusForeignPtr` offset
-              |- targetLen
-       return (Strict.BS fp1 len1, Strict.BS fp2 len2, Strict.empty)
+              |- targetLen - offset
+       return $ (Strict.BS fp1 len1, Strict.BS fp2 len2)
 
 -- | This function is very unsafe!
 -- | In particular, it is not checked whether the offset+count is indeed smaller than stringLen,
@@ -129,9 +137,6 @@ unsafeRemoveByteString
   -> Strict.ByteString
 unsafeRemoveByteString offset count (Strict.BS stringFp stringLen) = unsafeDupablePerformIO $ do
   let len = stringLen - count
-      memcpy target source length = unsafeWithForeignPtr target
-                                  $ \t -> unsafeWithForeignPtr source
-                                  $ \s -> copyBytes t s length
   fp <- Strict.mallocByteString len
   memcpy
     |- fp

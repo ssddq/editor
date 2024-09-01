@@ -64,6 +64,8 @@ data DeleteState = DeleteState
   { position  :: {-# UNPACK #-} !Position
   , remaining :: {-# UNPACK #-} !Int
   , extras    :: {-# UNPACK #-} !Int
+  , limit     :: {-# UNPACK #-} !Int
+  , newCursor :: {-# UNPACK #-} !Position
   }
   deriving (Show)
 
@@ -242,5 +244,5 @@ insertSegment
   :: Strict.ByteString
   -> Int
   -> Strict.ByteString
-  -> (Strict.ByteString, Strict.ByteString, Strict.ByteString)
+  -> (Strict.ByteString, Strict.ByteString)
 insertSegment = unsafeInsertByteString
