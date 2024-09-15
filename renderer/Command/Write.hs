@@ -36,7 +36,7 @@ initialState = WriteState
   , xMax = 0
   , yMax = 0
   , lines = 0
-  , color = Color 255 255 255 255
+  , drawColor = Color 255 255 255 255
   , currentLine = False
   , currentLineStart = 0
   , currentLineStop = 0
@@ -92,7 +92,7 @@ writeCharacterDraw char constants font pDrawCmds pDrawData state = case (drawSta
         Constants {..} = constants
         (,,,) firstIndex indexCount advance _ = lookup $ fromIntegral $ fromEnum char
         width = scale * fromIntegral advance
-        mkDrawData x y = DrawData x y scale 0 0 scale fSize state.color
+        mkDrawData x y = DrawData x y scale 0 0 scale fSize state.drawColor
         drawCmd = createVk @VkDrawIndexedIndirectCommand
           $ set @"indexCount"    |* fromIntegral indexCount
          &* set @"instanceCount" |* 1
@@ -211,7 +211,7 @@ writeIndirectDrawStream mode constants font = loop
           result <- writeCursorDraw (cursor mode) font pDrawCmds pDrawData state
           let (,,) pDrawCmds' pDrawData' state' = result
           loop pDrawCmds' pDrawData' state' stream
-        loop pDrawCmds pDrawData state (S.Step (ColorChange color S.:> stream)) = loop pDrawCmds pDrawData (state { color }) stream
+        loop pDrawCmds pDrawData state (S.Step (ColorChange color S.:> stream)) = loop pDrawCmds pDrawData (state { drawColor = color }) stream
         loop pDrawCmds pDrawData state (S.Step (Char c S.:> stream)) = do
           let char = toEnum $ fromIntegral c
           result <- writeCharacterDraw char constants font pDrawCmds pDrawData state

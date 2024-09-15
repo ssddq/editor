@@ -36,7 +36,7 @@ findLineNumber !position !Tree{ index, left, node, right } = case (inRange posit
   EQ -> index + findIndex' node position
   LT -> findLineNumber position left
   GT -> index + forceLength node + findLineNumber position right
-findLineNumber _ !Nil{} = error "findLineNumber called on nil; invalid"
+findLineNumber _ !Nil{} = error "findLineNumber called on nil, which should never happen"
 
 {-# INLINE findLinePosition #-}
 findLinePosition
@@ -44,32 +44,35 @@ findLinePosition
   -> Tree Lines
   -> Position
 findLinePosition !n !Tree{ index, left = Nil{}, node, right = Nil{} }
-  | otherwise = case node of
-      Base     v -> Position (v >!< offset) 0
-      Offset k v -> Position k (v >!< offset)
-  where offset  = n - index
+  | otherwise = findLinePositionInNode offset node
+  where offset = n - index
 findLinePosition !n !Tree{ index, left = Nil{}, node, right }
   | subindex >= 0 = findLinePosition subindex right
-  | otherwise = case node of
-      Base     v -> Position (v >!< offset) 0
-      Offset k v -> Position k (v >!< offset)
-  where offset  = n - index
+  | otherwise     = findLinePositionInNode offset node
+  where offset   = n - index
         subindex = offset - forceLength node
 findLinePosition !n !Tree{ index, left, node, right = Nil{} }
   | offset < 0 = findLinePosition n left
-  | otherwise = case node of
-      Base     v -> Position (v >!< offset) 0
-      Offset k v -> Position k (v >!< offset)
-  where offset  = n - index
+  | otherwise  = findLinePositionInNode offset node
+  where offset = n - index
 findLinePosition !n !Tree{ index, left, node, right }
-  | offset < 0 = findLinePosition n left
+  | offset < 0    = findLinePosition n left
   | subindex >= 0 = findLinePosition subindex right
+  | otherwise     = findLinePositionInNode offset node
+  where offset   = n - index
+        subindex = offset - forceLength node
+findLinePosition _ !Nil{} = error "findLinePosition was called on nil, which should never happen"
+
+{-# INLINE findLinePositionInNode #-}
+findLinePositionInNode
+  :: Int
+  -> Lines
+  -> Position
+findLinePositionInNode offset node
+  | isEmpty node = Position (-1) 0
   | otherwise = case node of
       Base     v -> Position (v >!< offset) 0
       Offset k v -> Position k (v >!< offset)
-  where offset  = n - index
-        subindex = offset - forceLength node
-findLinePosition _ !Nil{} = error "findLinePosition was called on nil; invalid"
 
 {-# INLINE insertNewlines #-}
 insertNewlines
@@ -83,9 +86,9 @@ insertNewlines !string !position !tree = makeBlack $ insert tree
     lines_count = Async.forceLength lines
     insert :: Tree Lines -> Tree Lines
     insert !Tree{ index, color, left, node, right } = case (inRange position node) of
-      LT -> balance (index + lines_count) color (insert left) node (right       )
-      GT -> balance (index              ) color (left       ) node (insert right)
-      EQ -> prependRight node'' . prependRight node''' $ Tree index color left node' right
+      LT -> balance (index + lines_count) color (insert left) node  (right                                           )
+      GT -> balance (index              ) color (left       ) node  (insert right                                    )
+      EQ -> balance (index              ) color (left       ) node' (prependTree node'' . prependTree node''' $ right)
             where (node', node'', node''') = insertLines position string node
     insert !nil@Nil{} =
       if (Async.null lines) then

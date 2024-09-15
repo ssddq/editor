@@ -22,9 +22,8 @@ cmdRenderPass0 state buffers vk = do
                               |- render
       viewport = mkViewport render
       scissor  = mkScissor render
-      cmdDraw    = subpassDraw vk buffers viewport scissor
-      cmdDrawFullscreen = subpassDrawFullscreen vk buffers viewport scissor
-      cmdResolve = subpassResolve vk buffers viewport scissor
+      cmdDraw  = subpassDraw vk buffers viewport scissor
+      cmdResolve  = subpassResolve vk buffers viewport scissor
       nextSubpass = vkCmdNextSubpass
                       |- commandBuffer
                       |- VK_SUBPASS_CONTENTS_INLINE
@@ -47,7 +46,7 @@ cmdRenderPass0 state buffers vk = do
                 ( round . present2RenderX constants $ state.xMax - state.xMin
                 , round . present2RenderY constants $ state.currentLineStop - state.currentLineStart
                 )
-    |- bgColorHighlight
+    |- bgColor
     |- [0]
   nextSubpass
   -- clear0

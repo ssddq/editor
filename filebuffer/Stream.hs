@@ -407,7 +407,7 @@ streamFromPosition handle (Branch prefix switch left right) position stream =
     _  -> streamFromPosition handle right position
           $ stream
   where divider = calculateDivider prefix switch
-streamFromPosition handle (Leaf prefix skip text length) Position{ base, offset } stream =
+streamFromPosition handle (Leaf prefix skip text length) position stream =
   case (compare base prefix) of
     LT -> do liftIO $ hSeek handle AbsoluteSeek $ fromIntegral base
              -- If prefix != position.base, position.offset should have been 0 anyway,
@@ -418,11 +418,12 @@ streamFromPosition handle (Leaf prefix skip text length) Position{ base, offset 
                     stream $ StreamState (prefix + skip) length maxBound
     EQ -> do liftIO $ hSeek handle AbsoluteSeek $ fromIntegral base
              liftIO $ hSeek handle RelativeSeek $ fromIntegral skip
-             streamInsertChunks prefix offset (drop offset text)
+             streamInsertChunks prefix position.offset (drop position.offset text)
                $ stream $ StreamState (prefix + skip) length maxBound
     GT -> do liftIO $ hSeek handle AbsoluteSeek $ fromIntegral base
              stream $ StreamState base 0 maxBound
-  where -- There's no point rebalancing the tree here, since this is a per-frame throwaway.
+  where base = max 0 position.base
+        -- There's no point rebalancing the tree here, since this is a per-frame throwaway.
         drop :: Int -> ByteTree -> ByteTree
         drop _ nil@Nil{} = nil
         drop n Tree{index, color, left, node, right} = case (compare n index) of

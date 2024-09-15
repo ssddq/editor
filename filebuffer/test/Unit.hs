@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedRecordDot   #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module Unit (unitTests) where
+module Unit where
 
 import Common
 import Filebuffer
@@ -37,11 +37,10 @@ import Unsafe.Coerce
 -- | A failing test does *not* mean the code is wrong or has a bug;
 -- | merely that there's something worth paying attention to.
 
-
-unitTests
+tests
   :: HasCallStack
   => SpecWith ()
-unitTests = do
+tests = do
   clampedIndexTests
   commonPrefixTests
   decodeUtf8Tests

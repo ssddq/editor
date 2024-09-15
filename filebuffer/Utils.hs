@@ -15,6 +15,7 @@ import Data.Bits
 
 import GHC.Int
 import GHC.Prim
+import GHC.Stack
 import GHC.Word
 
 import Data.ByteString          qualified as Strict
@@ -24,18 +25,10 @@ import Data.IntMap.Strict       qualified as Map
 import Data.Vector.Async qualified as Async
 
 
-{-# INLINE diff #-}
-diff
-  :: Strict.ByteString
-  -> Strict.ByteString
-  -> Strict.ByteString
-diff !full !tail = Strict.take (Strict.length full - Strict.length tail) full
-
 data ByteStringColored = ByteStringColored
   { string :: {-# UNPACK #-} !Strict.ByteString
   , color  :: {-# UNPACK #-} !Color
   }
-
 
 data CompletedMatches
   = Match {-# UNPACK #-} !Position
@@ -117,7 +110,8 @@ instance Contiguous Strict.ByteString where
 
 {-# INLINE (>!<) #-}
 (>!<)
-  :: Async.Vector
+  :: HasCallStack
+  => Async.Vector
   -> Int
   -> Int
 (>!<) v n =
@@ -209,6 +203,13 @@ decodeUtf8# !byte1 !byte2 !byte3 !byte4 =
         !(W64# utf8Shifts) = (0b00000110000011000000000000010010 :: Word64)
         !(W64# mask      ) = (0b0000011100001111000111110000000011111111 :: Word64)
         mask1 = wordToWord8# (word64ToWord# (uncheckedShiftRL64# mask (leadingZeros *# 8#)))
+
+{-# INLINE diff #-}
+diff
+  :: Strict.ByteString
+  -> Strict.ByteString
+  -> Strict.ByteString
+diff !full !tail = Strict.take (Strict.length full - Strict.length tail) full
 
 -- | The binary literal
 -- |

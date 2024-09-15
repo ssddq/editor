@@ -340,6 +340,18 @@ null Vector{ start, span, consumedTVar, vectorTVar }
 
 -- * Functions that force input
 
+{-# INLINE force #-}
+force
+  :: Vector
+  -> IO (V.Vector Int)
+force Vector{ start, span, consumedTVar, vectorTVar } = stToIO . unsafePerformSTM $ do
+  consumed <- readTVar consumedTVar
+  vector@(Dynamic.Vector length _) <- readTVar vectorTVar
+  if (consumed == maxBound || length >= start + span ) then
+    return $ V.take span . V.drop start <$> Dynamic.freezeIO vector
+  else
+    retry
+
 -- | Use unsafePerformIO rather than unsafeDupablePerformIO
 -- | since this function allocates.
 -- |

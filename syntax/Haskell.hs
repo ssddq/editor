@@ -34,33 +34,33 @@ hs
   :: ParserState
   -> Parser e (Color, ParserState)
 hs DefaultState =
-      (import_ *> pure (keywordColor, ImportLine))
-  <|> (keyword *> pure (keywordColor, DefaultState))
-  <|> (comment *> pure (commentColor, DefaultState))
-  <|> (moduleQualifier *> pure (commentColor, DefaultState))
-  <|> (parentheses *> pure (parenthesesColor, DefaultState))
-  <|> (typeIdentifier *> pure (typeIdentifierColor, DefaultState))
-  <|> (stringLiteral *> pure (stringLiteralColor, DefaultState))
+      (import_            *> pure (keywordColor           , ImportLine  ))
+  <|> (keyword            *> pure (keywordColor           , DefaultState))
+  <|> (comment            *> pure (commentColor           , DefaultState))
+  <|> (moduleQualifier    *> pure (commentColor           , DefaultState))
+  <|> (parentheses        *> pure (parenthesesColor       , DefaultState))
+  <|> (typeIdentifier     *> pure (typeIdentifierColor    , DefaultState))
+  <|> (stringLiteral      *> pure (stringLiteralColor     , DefaultState))
   <|> (topLevelIdentifier *> pure (topLevelIdentifierColor, DefaultState))
-  <|> (guard *> pure (commentColor, DefaultState))
-  <|> (keySymbol *> pure (keySymbolColor, DefaultState))
-  <|> (identifier *> pure (identifierColor, DefaultState))
-  <|> (operator *> pure (operatorColor, DefaultState))
-  <|> (fallback *> pure (fallbackColor, DefaultState))
+  <|> (guard              *> pure (commentColor           , DefaultState))
+  <|> (keySymbol          *> pure (keySymbolColor         , DefaultState))
+  <|> (identifier         *> pure (identifierColor        , DefaultState))
+  <|> (operator           *> pure (operatorColor          , DefaultState))
+  <|> (fallback           *> pure (fallbackColor          , DefaultState))
 hs ImportLine =
-      (parentheses *> pure (parenthesesColor, ImportLine))
-  <|> ($(char '\n') *> pure (fallbackColor, DefaultState))
-  <|> (importKeyword *> pure (commentColor, ImportLine))
-  <|> (identifier *> pure (identifierColor, ImportLine))
-  <|> (fallback *> pure (fallbackColor, ImportLine))
+      (parentheses        *> pure (parenthesesColor       , ImportLine  ))
+  <|> ($(char '\n')       *> pure (fallbackColor          , DefaultState))
+  <|> (importKeyword      *> pure (commentColor           , ImportLine  ))
+  <|> (identifier         *> pure (identifierColor        , ImportLine  ))
+  <|> (fallback           *> pure (fallbackColor          , ImportLine  ))
 
 {-# INLINE hsParser #-}
 hsParser :: FileParser ParserState e
 hsParser = FileParser
-  { parser       = hs
-  , defaultColor = fallbackColor
-  , defaultState = DefaultState
-  , cursor = colorCursor
+  { parser           = hs
+  , defaultColor     = fallbackColor
+  , defaultState     = DefaultState
+  , cursor           = colorCursor
   , requestedContext = 512
   }
 

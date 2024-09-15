@@ -132,8 +132,14 @@ skipFromTo
   -> Lines
   -> (Lines, Lines, Int)
 skipFromTo start stop array@(Base v) = case (Async.compareLength v deleteCount) of
-    GT -> bumpEmpty2 $ (Base head, Base $ Async.drop deleteCount tail, deleteCount)
-    _  -> bumpEmpty2 $ (empty, empty, Async.forceLength v)
+    GT -> bumpEmpty2 $ ( Base head
+                       , Base $ Async.drop deleteCount tail
+                       , deleteCount
+                       )
+    _  -> bumpEmpty2 $ ( empty
+                       , empty
+                       , Async.forceLength v
+                       )
   where n = findIndex' array start
         m = findIndex_ array stop
         deleteCount =
@@ -142,10 +148,20 @@ skipFromTo start stop array@(Base v) = case (Async.compareLength v deleteCount) 
             _  -> Async.forceLength v - n
         (head, tail) = Async.splitAt n v
 skipFromTo start stop array@(Offset k v) = case (Async.compareLength v deleteCount) of
-    GT -> bumpEmpty2 $ (Offset k $ Async.forceConcat3 head (Async.map (start.offset - stop.offset) $ Async.drop deleteCount tail) Async.emptyVector, empty, deleteCount)
-    _  -> bumpEmpty2 $ (empty, empty, Async.forceLength v)
+    GT -> bumpEmpty2 $ ( Offset k $ Async.forceConcat3 head (Async.map (offsetStart - stop.offset) $ Async.drop deleteCount tail) Async.emptyVector
+                       , empty
+                       , deleteCount
+                       )
+    _  -> bumpEmpty2 $ ( empty
+                       , empty
+                       , Async.forceLength v
+                       )
   where n = findIndex' array start
         m = findIndex_ array stop
+        offsetStart = if start.base == stop.base then
+                        start.offset
+                      else
+                        0
         deleteCount =
           case (Async.compareLength v m) of
             GT -> m - n + 1

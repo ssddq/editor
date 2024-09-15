@@ -75,5 +75,3 @@ void main()
   outWind =        drawFull  * fillBase
           + (1.0 - drawFull) * fillControl;
 }
-
-

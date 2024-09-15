@@ -174,17 +174,14 @@ moveUp
   -> Tree Lines
   -> Position
   -> Position
-moveUp !k !edits !tree !position =
-  -- Check to see if we've hit the start of the file
-  if (target_start == target_end) then
-    moveForward offset edits target_start
-  else
-    min target_end $ moveForward offset edits target_start
-  where n            = Tree.findLineNumber position tree - 1
-        offset       = max 1 $ calculateDistance edits start position
-        start        = Tree.findLinePosition (n        ) tree
-        target_start = Tree.findLinePosition (n - k    ) tree
-        target_end   = Tree.findLinePosition (n - k + 1) tree
+moveUp !k !edits !tree !position
+  | targetLineStart /= targetNextLineStart = min targetNextLineStart $ moveForward lineOffset edits targetLineStart
+  | otherwise = moveForward lineOffset edits targetLineStart
+  where lineNumber = Tree.findLineNumber position tree - 1
+        lineStart  = Tree.findLinePosition lineNumber $ tree
+        lineOffset = calculateDistance edits lineStart position
+        targetLineStart     = Tree.findLinePosition (lineNumber - k    ) tree
+        targetNextLineStart = Tree.findLinePosition (lineNumber - k + 1) tree
 
 
 

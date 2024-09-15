@@ -1,7 +1,7 @@
 module Test where
 
-import Unit
 import Model
+import Unit
 
 import Test.Hspec
 
@@ -10,5 +10,5 @@ main
   => IO ()
 main = do
    hspec $ do
-     unitTests
-     modelTests
+     Unit.tests
+     Model.tests

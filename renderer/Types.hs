@@ -241,17 +241,17 @@ data Vulkan = Vulkan
   }
 
 data WriteState = WriteState
-  { instanceNum :: {-# UNPACK #-} !Word32
-  , positionX   :: {-# UNPACK #-} !Float
-  , positionY   :: {-# UNPACK #-} !Float
-  , xMax        :: {-# UNPACK #-} !Float
-  , yMax        :: {-# UNPACK #-} !Float
-  , xMin        :: {-# UNPACK #-} !Float
-  , lines       :: {-# UNPACK #-} !Int
-  , color       :: {-# UNPACK #-} !Color
-  , currentLine :: {-# UNPACK #-} !Bool
+  { instanceNum      :: {-# UNPACK #-} !Word32
+  , positionX        :: {-# UNPACK #-} !Float
+  , positionY        :: {-# UNPACK #-} !Float
+  , xMax             :: {-# UNPACK #-} !Float
+  , yMax             :: {-# UNPACK #-} !Float
+  , xMin             :: {-# UNPACK #-} !Float
+  , lines            :: {-# UNPACK #-} !Int
+  , drawColor        :: {-# UNPACK #-} !Color
+  , currentLine      :: {-# UNPACK #-} !Bool
   , currentLineStart :: {-# UNPACK #-} !Float
-  , currentLineStop :: {-# UNPACK #-} !Float
+  , currentLineStop  :: {-# UNPACK #-} !Float
   }
 
 

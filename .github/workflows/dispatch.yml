@@ -3,7 +3,7 @@ name: Trigger build
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   dispatch:
