@@ -204,8 +204,9 @@ data Shaders = Shaders
   }
 
 data Signals = Signals
-  { semaphores :: {-# UNPACK #-} !Semaphores
-  , fences     :: {-# UNPACK #-} !Fences
+  { drawIndex  :: {-# UNPACK #-} !Int
+  , semaphores :: {-# UNPACK #-} !(V.Vector Semaphores)
+  , fences     :: {-# UNPACK #-} !(V.Vector Fences)
   }
 
 data StreamBuffer b = StreamBuffer

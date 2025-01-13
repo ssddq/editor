@@ -46,16 +46,18 @@ drawFrame vk = do
                        |- device
                        |- queueFamilyIndex
                        |- 0
+  let fences     = nextFences     vk
+      semaphores = nextSemaphores vk
+  waitOn
+    |- device
+    |- fences.inFlight
   imageIndex <- perform $ vkAcquireNextImageKHR
                             |- device
                             |- swapchain
                             |- maxBound
                             |- semaphores.available
                             |- VK_NULL_HANDLE
-  let Buffers {..} = drawBuffers V.! fromIntegral imageIndex
-  waitOn
-    |- device
-    |- fences.inFlight
+  let buffers@(Buffers {..}) = drawBuffers V.! fromIntegral imageIndex
   vkResetCommandBuffer
     |- commandBuffer
     |- VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT
@@ -64,11 +66,11 @@ drawFrame vk = do
                                |- instanceData
                                |- vk
   recordCommandBuffer
-    |- drawBuffers V.! fromIntegral imageIndex
+    |- buffers
     |- drawCount
     |- vk
-  let submitInfo  = mkSubmitInfo  commandBuffer
-      presentInfo = mkPresentInfo imageIndex
+  let submitInfo  = mkSubmitInfo  commandBuffer semaphores
+      presentInfo = mkPresentInfo imageIndex    semaphores
   vkQueueSubmit
     |- queue
     |- 1
@@ -77,11 +79,10 @@ drawFrame vk = do
   vkQueuePresentKHR
     |- queue
     |- p presentInfo
-  return $ vk { stream = stream { textBuffer } }
+  return $ incrementDrawIndex vk { stream = stream { textBuffer } }
   where Vk      {..} = vk
         Vulkan  {..} = vulkan
-        Signals {..} = signals
-        mkSubmitInfo commandBuffer = createVk @VkSubmitInfo
+        mkSubmitInfo commandBuffer semaphores = createVk @VkSubmitInfo
           $ set                @"sType"                  |* VK_STRUCTURE_TYPE_SUBMIT_INFO
          &* set                @"pNext"                  |* VK_NULL
          &* setListRef         @"pWaitDstStageMask"      |* [VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT]
@@ -91,7 +92,7 @@ drawFrame vk = do
                                @"pCommandBuffers"        |* [commandBuffer]
          &* setListCountAndRef @"signalSemaphoreCount"-- |*
                                @"pSignalSemaphores"      |* [semaphores.done]
-        mkPresentInfo index = createVk @VkPresentInfoKHR
+        mkPresentInfo index semaphores = createVk @VkPresentInfoKHR
           $ set                @"sType"                  |* VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
          &* set                @"pNext"                  |* VK_NULL
          &* setListCountAndRef @"waitSemaphoreCount"  -- |*
